@@ -11,6 +11,9 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "SRI KAMBATHUKARAR PHYSIOTHERAPY AND REHABILITATION CENTER | Your Health, Our Priority",
   description: "Experience world-class physiotherapy care with our premium patient booking and management interface.",
+  icons: {
+    icon: "/skct.png",
+  },
 };
 
 export default function RootLayout({

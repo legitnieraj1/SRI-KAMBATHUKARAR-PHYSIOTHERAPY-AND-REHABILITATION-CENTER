@@ -16,8 +16,8 @@ export default function LandingPage() {
             <img src="/skct.png" alt="SKCT Logo" className="w-full h-full object-contain object-center" />
           </div>
           <div>
-            <h1 className="text-base font-bold leading-tight tracking-wide text-primary">SRI KAMBATHUKARAR PHYSIOTHERAPY AND REHABILITATION CENTER</h1>
-            <p className="text-xs text-primary/60 font-medium">ஸ்ரீ கம்பத்துக்காரர் பிசியோதெரபி மற்றும் மறுவாழ்வு மையம்</p>
+            <h1 className="text-[11px] sm:text-sm font-bold leading-tight tracking-wide text-primary">SRI KAMBATHUKARAR PHYSIOTHERAPY AND REHABILITATION CENTER</h1>
+            <p className="text-[9px] sm:text-xs text-primary/60 font-medium mt-0.5">ஸ்ரீ கம்பத்துக்காரர் பிசியோதெரபி மற்றும் மறுவாழ்வு மையம்</p>
           </div>
         </div>
         {/* Language Toggle */}
@@ -29,7 +29,7 @@ export default function LandingPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col justify-start px-5 pb-24 z-10 relative w-full max-w-lg mx-auto">
+      <main className="flex-1 flex flex-col justify-start px-5 pb-36 sm:pb-32 z-10 relative w-full max-w-lg mx-auto">
         {/* Hero Card */}
         <div className="glass-card bg-mint-card rounded-3xl p-6 mb-8 mt-4 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary-light/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
