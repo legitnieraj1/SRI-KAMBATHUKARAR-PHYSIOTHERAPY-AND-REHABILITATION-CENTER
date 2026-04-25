@@ -6,74 +6,160 @@ import { useRouter } from "next/navigation";
 
 export default function StaffLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login and redirect to dashboard
-    router.push("/admin/dashboard");
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Invalid credentials"); return; }
+      const role = data.data?.user?.role;
+      if (role === "SUPER_ADMIN") router.push("/admin/dashboard");
+      else if (role === "DOCTOR") router.push("/doctor/schedule");
+      else setError("Access denied for this account");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="bg-background-soft text-text-dark font-display antialiased min-h-screen flex flex-col justify-center items-center relative overflow-hidden selection:bg-primary selection:text-white px-6">
-      {/* Ambient Background Elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] left-[-20%] w-[400px] h-[400px] bg-accent/20 rounded-full blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen bg-background-soft flex">
+      {/* Left panel — desktop only */}
+      <div className="hidden lg:flex flex-col justify-between w-[44%] xl:w-[40%] bg-primary p-10 xl:p-14 relative overflow-hidden">
+        {/* Ambient glows */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3 pointer-events-none" />
 
-      <div className="w-full max-w-sm relative z-10">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center size-16 mx-auto rounded-2xl bg-white/80 border border-primary/20 backdrop-blur-sm p-1.5 shadow-sm mb-6">
-            <img src="/skct.png" alt="SKCT Logo" className="w-full h-full object-contain object-center" />
+        {/* Logo */}
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-10 h-10 rounded-xl bg-white/15 p-1.5">
+            <img src="/skct.png" alt="SKCT" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-primary mb-1">Staff Access</h1>
-          <p className="text-sm text-text-dark/60 font-medium">பணியாளர் உள்நுழைவு</p>
+          <div>
+            <p className="text-white font-bold text-sm">SKCT Physio</p>
+            <p className="text-white/50 text-xs">Staff Portal</p>
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="glass-card bg-mint-card/50 rounded-3xl p-8 flex flex-col gap-5 border border-primary/10 shadow-lg shadow-primary/5">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-primary tracking-wide uppercase opacity-80" htmlFor="email">Email</label>
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/50 text-xl">mail</span>
-              <input 
-                id="email"
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full bg-white/50 border border-border-grey rounded-xl py-3 pl-10 pr-4 text-sm text-primary placeholder:text-text-dark/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
-                placeholder="staff@kambathukarar.com"
-              />
+        {/* Headline */}
+        <div className="relative z-10">
+          <h1 className="text-3xl xl:text-4xl font-bold text-white leading-tight mb-4">
+            Welcome back<br />to your<br />workspace.
+          </h1>
+          <p className="text-white/60 text-sm leading-relaxed max-w-xs">
+            Manage appointments, track patient progress, and monitor revenue — all in one place.
+          </p>
+
+          {/* Feature pills */}
+          <div className="flex flex-wrap gap-2 mt-6">
+            {["Patient Management", "Revenue Reports", "Session Tracking", "Doctor Scheduling"].map((f) => (
+              <span key={f} className="text-xs font-medium text-white/70 bg-white/10 px-3 py-1.5 rounded-full border border-white/10">
+                {f}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-white/30 text-xs relative z-10">
+          Sri Kambathukarar Physiotherapy &amp; Rehabilitation Center
+        </p>
+      </div>
+
+      {/* Right panel — login form */}
+      <div className="flex-1 flex items-center justify-center px-5 py-10 lg:px-12 xl:px-16">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-8 lg:hidden">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 p-1.5">
+              <img src="/skct.png" alt="SKCT" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <p className="font-bold text-primary text-sm">SKCT Physio</p>
+              <p className="text-text-muted text-xs">Staff Portal</p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-primary tracking-wide uppercase opacity-80" htmlFor="password">Password</label>
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/50 text-xl">lock</span>
-              <input 
-                id="password"
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full bg-white/50 border border-border-grey rounded-xl py-3 pl-10 pr-4 text-sm text-primary placeholder:text-text-dark/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
-                placeholder="••••••••"
-              />
+          <h2 className="text-2xl font-bold text-text-dark mb-1">Sign in</h2>
+          <p className="text-text-muted text-sm mb-7">பணியாளர் உள்நுழைவு · Doctor &amp; Admin access</p>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Phone */}
+            <div>
+              <label className="block text-xs font-bold text-text-dark mb-1.5 uppercase tracking-wide opacity-70">Mobile Number</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-sm font-medium">+91</span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  required
+                  className="input pl-11"
+                  placeholder="9876543210"
+                  autoComplete="username"
+                />
+              </div>
             </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-xs font-bold text-text-dark mb-1.5 uppercase tracking-wide opacity-70">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="input pr-11"
+                  placeholder="Enter password"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-dark transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg">{showPassword ? "visibility_off" : "visibility"}</span>
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium flex items-center gap-2">
+                <span className="material-symbols-outlined text-base">error</span>{error}
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="btn-primary w-full py-3.5 text-base">
+              {loading
+                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Signing in...</>
+                : <>Sign In <span className="material-symbols-outlined text-lg">arrow_forward</span></>}
+            </button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-border-grey text-center space-y-3">
+            <p className="text-sm text-text-muted">
+              Patient?{" "}
+              <Link href="/login" className="text-primary font-semibold hover:underline underline-offset-2">
+                Login with OTP
+              </Link>
+            </p>
+            <Link href="/" className="text-xs text-text-muted hover:text-primary transition-colors flex items-center justify-center gap-1">
+              <span className="material-symbols-outlined text-sm">arrow_back</span>Back to Home
+            </Link>
           </div>
-
-          <button type="submit" className="w-full bg-green-gradient hover:opacity-90 text-white rounded-xl py-3.5 font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2">
-            <span>Login to Dashboard</span>
-            <span className="material-symbols-outlined text-lg">arrow_forward</span>
-          </button>
-        </form>
-
-        <div className="mt-8 text-center text-xs text-text-dark/50 font-medium">
-          <Link href="/" className="hover:text-primary hover:underline underline-offset-2 transition-all flex items-center justify-center gap-1">
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-            Back to Home / முகப்பு
-          </Link>
         </div>
       </div>
     </div>

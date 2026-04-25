@@ -2,126 +2,190 @@
 
 import Link from "next/link";
 
+const FEATURES = [
+  { icon: "accessibility_new", title: "Expert Physiotherapy", desc: "Certified physiotherapists with years of clinical experience in musculoskeletal rehabilitation." },
+  { icon: "home", title: "Home Visits", desc: "Can't travel? Our doctors come to you. Book a home visit for the same professional care." },
+  { icon: "date_range", title: "5-Day Packages", desc: "Structured Mon–Fri treatment plans for faster recovery with consistent care." },
+  { icon: "photo_camera", title: "Progress Tracking", desc: "Every session is documented with photos and notes so you can see your recovery journey." },
+  { icon: "currency_rupee", title: "Affordable Care", desc: "Sessions start at just ₹100. Quality physiotherapy shouldn't be a luxury." },
+  { icon: "schedule", title: "Flexible Timing", desc: "Morning and evening slots available six days a week to fit your schedule." },
+];
+
 export default function LandingPage() {
   return (
-    <div className="bg-background-soft text-text-dark font-display antialiased min-h-screen flex flex-col relative overflow-hidden selection:bg-primary selection:text-white">
-      {/* Ambient Background Elements */}
-      <div className="glow-orb-1"></div>
-      <div className="glow-orb-2"></div>
+    <div className="min-h-screen bg-background-soft text-text-dark font-display antialiased">
 
-      {/* Header / Top Bar */}
-      <header className="flex items-center justify-between px-6 py-5 z-10 relative">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center shrink-0 size-14 rounded-xl bg-white/50 border border-primary/20 backdrop-blur-sm p-1 shadow-sm">
-            <img src="/skct.png" alt="SKCT Logo" className="w-full h-full object-contain object-center" />
+      {/* ── Nav ── */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-border-grey sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-5 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 p-1.5 shrink-0">
+              <img src="/skct.png" alt="SKCT" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <p className="font-bold text-primary text-sm leading-none">SKCT Physio</p>
+              <p className="text-text-muted text-[11px] mt-0.5 hidden sm:block">Sri Kambathukarar Physiotherapy Center</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-[11px] sm:text-sm font-bold leading-tight tracking-wide text-primary">SRI KAMBATHUKARAR PHYSIOTHERAPY AND REHABILITATION CENTER</h1>
-            <p className="text-[9px] sm:text-xs text-primary/60 font-medium mt-0.5">ஸ்ரீ கம்பத்துக்காரர் பிசியோதெரபி மற்றும் மறுவாழ்வு மையம்</p>
+          <div className="flex items-center gap-3">
+            <Link href="/stafflogin" className="text-sm font-semibold text-text-muted hover:text-primary transition-colors hidden sm:block">
+              Staff Login
+            </Link>
+            <Link href="/booking" className="btn-primary py-2.5 px-5 text-sm">
+              <span className="material-symbols-outlined text-base">calendar_month</span>
+              Book Now
+            </Link>
           </div>
         </div>
-        {/* Language Toggle */}
-        <button className="glass-button flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-all active:scale-95 group">
-          <span className="text-xs font-bold text-primary group-hover:text-primary-light transition-colors">ENG</span>
-          <span className="h-3 w-px bg-primary/20"></span>
-          <span className="text-xs font-bold text-primary/70 group-hover:text-primary transition-colors">தமிழ்</span>
-        </button>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col justify-start px-5 pb-36 sm:pb-32 z-10 relative w-full max-w-lg mx-auto">
-        {/* Hero Card */}
-        <div className="glass-card bg-mint-card rounded-3xl p-6 mb-8 mt-4 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-light/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-          <p className="text-primary-light text-sm font-bold tracking-wider uppercase mb-1">Welcome / வணக்கம்</p>
-          <h2 className="text-3xl font-extrabold text-primary leading-tight mb-2">
-            Your Health, <br />
-            <span className="text-transparent bg-clip-text bg-green-gradient">Our Priority.</span>
-          </h2>
-          <p className="text-text-dark/80 text-sm leading-relaxed max-w-[90%] font-medium">
-            Experience world-class physiotherapy care.
-            <br />
-            <span className="text-text-dark/60 text-xs">உலகத் தரம் வாய்ந்த பிசியோதெரபி சிகிச்சை.</span>
-          </p>
-        </div>
-
-        {/* Primary Action: Book Appointment */}
-        <div className="flex flex-col gap-6">
-          <Link href="/booking" className="relative w-full group">
-            {/* Glowing background effect */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary-light rounded-[2rem] blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-            {/* Main Button Card */}
-            <div className="relative flex flex-col items-center justify-center bg-beige-card rounded-[1.8rem] p-8 border border-primary/10 shadow-lg overflow-hidden active:scale-[0.98] transition-all duration-200">
-              {/* Decorative subtle shine */}
-              <div className="absolute inset-0 bg-card-shine opacity-30"></div>
-              {/* Icon Container */}
-              <div className="size-20 bg-green-gradient rounded-full flex items-center justify-center mb-5 shadow-[0_10px_20px_rgba(14,75,47,0.2)] group-hover:scale-110 transition-transform duration-300 z-10">
-                <span className="material-symbols-outlined text-white text-4xl">calendar_month</span>
-              </div>
-              <h3 className="text-2xl font-bold text-primary z-10">Book Appointment</h3>
-              <h3 className="text-xl font-medium text-primary/80 mb-2 z-10 mt-1">முன்பதிவு செய்யவும்</h3>
-              <p className="text-text-dark/50 text-sm font-medium z-10">New or returning patients</p>
+      {/* ── Hero ── */}
+      <section className="max-w-6xl mx-auto px-5 lg:px-8 pt-14 pb-16 lg:pt-20 lg:pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left */}
+          <div>
+            <span className="inline-flex items-center gap-2 text-xs font-bold text-accent bg-accent/10 px-3 py-1.5 rounded-full mb-5">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              Now accepting new patients
+            </span>
+            <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-text-dark leading-tight mb-4">
+              Recover faster.<br />
+              <span className="text-primary">Move better.</span>
+            </h1>
+            <p className="text-text-muted text-base lg:text-lg leading-relaxed mb-2">
+              Professional physiotherapy and rehabilitation care — at our center or at your home.
+            </p>
+            <p className="text-text-muted/70 text-sm mb-8">
+              ஸ்ரீ கம்பத்துக்காரர் பிசியோதெரபி மற்றும் மறுவாழ்வு மையம்
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/booking" className="btn-primary py-3.5 px-7 text-base">
+                <span className="material-symbols-outlined">calendar_month</span>
+                Book a Session
+              </Link>
+              <a href="tel:+919500000000" className="btn-secondary py-3.5 px-7 text-base">
+                <span className="material-symbols-outlined">call</span>
+                Call Us
+              </a>
             </div>
-          </Link>
-
-          {/* Quick Stats / Info Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-white/40 transition-colors cursor-pointer active:scale-95">
-              <div className="size-10 rounded-full bg-primary-light/20 text-primary-light flex items-center justify-center mb-2">
-                <span className="material-symbols-outlined">schedule</span>
-              </div>
-              <span className="text-primary font-bold text-sm">Open Today</span>
-              <span className="text-text-dark/60 text-xs font-medium mt-0.5">9 AM - 9 PM</span>
-            </div>
-            <div className="glass-card rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-white/40 transition-colors cursor-pointer active:scale-95">
-              <div className="size-10 rounded-full bg-primary-light/20 text-primary-light flex items-center justify-center mb-2">
-                <span className="material-symbols-outlined">star</span>
-              </div>
-              <span className="text-primary font-bold text-sm">Top Rated</span>
-              <span className="text-text-dark/60 text-xs font-medium mt-0.5">5.0 Rating</span>
+            <div className="flex items-center gap-6 mt-8">
+              {[
+                { value: "500+", label: "Patients Treated" },
+                { value: "₹100", label: "Starting Price" },
+                { value: "6 Days", label: "A Week" },
+              ].map((s) => (
+                <div key={s.label}>
+                  <p className="text-xl font-bold text-primary">{s.value}</p>
+                  <p className="text-xs text-text-muted font-medium">{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
 
+          {/* Right — booking card */}
+          <div className="lg:pl-8">
+            <div className="card p-6 lg:p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-white text-2xl">medical_services</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-text-dark">Book Appointment</p>
+                    <p className="text-xs text-text-muted">முன்பதிவு செய்யவும் · No account needed</p>
+                  </div>
+                </div>
 
+                <div className="space-y-3 mb-6">
+                  {[
+                    { icon: "calendar_today", label: "1-Day Package", price: "₹100", desc: "Single session" },
+                    { icon: "date_range", label: "5-Day Package", price: "₹300", desc: "Mon–Fri sessions" },
+                  ].map((pkg) => (
+                    <div key={pkg.label} className="flex items-center gap-3 p-3.5 bg-background-soft rounded-xl">
+                      <span className="material-symbols-outlined text-primary text-xl">{pkg.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-text-dark">{pkg.label}</p>
+                        <p className="text-xs text-text-muted">{pkg.desc}</p>
+                      </div>
+                      <p className="text-lg font-bold text-primary">{pkg.price}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 mb-4">
+                  {["Center Visit", "Home Visit"].map((v) => (
+                    <div key={v} className="flex items-center gap-1.5 text-xs font-semibold text-text-muted bg-background-soft px-3 py-1.5 rounded-full">
+                      <span className="material-symbols-outlined text-sm text-primary">{v === "Center Visit" ? "business" : "home"}</span>
+                      {v}
+                    </div>
+                  ))}
+                </div>
+
+                <Link href="/booking" className="btn-primary w-full py-3.5 text-base justify-center">
+                  <span className="material-symbols-outlined">arrow_forward</span>
+                  Book Now — It's Free
+                </Link>
+                <p className="text-xs text-text-muted text-center mt-3">Payment collected at the clinic · Cash only</p>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </section>
 
-      {/* Bottom Navigation / Quick Contacts */}
-      <nav className="fixed bottom-0 left-0 right-0 glass-nav z-50 pb-safe pt-2">
-        <div className="flex justify-between items-center px-6 py-3 max-w-lg mx-auto">
-          <a className="flex flex-col items-center gap-1 group w-16" href="tel:+1234567890">
-            <div className="size-12 rounded-full bg-white border border-border-grey flex items-center justify-center group-active:scale-90 transition-all group-hover:border-primary/50 group-hover:bg-mint-card">
-              <span className="material-symbols-outlined text-primary text-2xl">call</span>
-            </div>
-            <span className="text-[10px] font-bold text-text-dark/60 group-hover:text-primary">Call</span>
-          </a>
-          <a className="flex flex-col items-center gap-1 group w-16 -mt-8" href="#">
-            <div className="size-14 rounded-full bg-green-gradient shadow-[0_4px_20px_rgba(14,75,47,0.3)] flex items-center justify-center group-active:scale-90 transition-all border-4 border-background-soft">
-              <span className="material-symbols-outlined text-white text-3xl">map</span>
-            </div>
-            <span className="text-[10px] font-bold text-primary">Map</span>
-          </a>
-          <a className="flex flex-col items-center gap-1 group w-16" href="#">
-            <div className="size-12 rounded-full bg-white border border-border-grey flex items-center justify-center group-active:scale-90 transition-all group-hover:border-primary-light/50 group-hover:bg-mint-card">
-              <span className="material-symbols-outlined text-primary-light text-2xl">chat</span>
-            </div>
-            <span className="text-[10px] font-bold text-text-dark/60 group-hover:text-primary-light">Help</span>
-          </a>
+      {/* ── Features ── */}
+      <section className="bg-white border-y border-border-grey py-16 lg:py-20">
+        <div className="max-w-6xl mx-auto px-5 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl lg:text-3xl font-bold text-text-dark mb-2">Why Choose SKCT Physio?</h2>
+            <p className="text-text-muted">ஏன் எங்களை தேர்வு செய்ய வேண்டும்?</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="card-hover p-5">
+                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-primary text-xl">{f.icon}</span>
+                </div>
+                <p className="font-bold text-text-dark mb-1.5">{f.title}</p>
+                <p className="text-sm text-text-muted leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        {/* Safe area spacing for iOS home indicator */}
-        <div className="h-6 w-full"></div>
-      </nav>
+      </section>
 
-      {/* Abstract background image for texture */}
-      <div
-        className="fixed inset-0 z-[-1] opacity-5 pointer-events-none mix-blend-multiply"
-        style={{
-          backgroundImage:
-            "url('https://lh3.googleusercontent.com/aida-public/AB6AXuB82v2xirGcxRawGar6lhlogdGC0hnYLj1RI_OdcTZ5aEr-vHQAZh8cKqDjZ4FdfYgWbBn5_7I5qxFALk-wk5RSMD_NnqvdkuGChU3GI98nPNtIT0iY-xmqwoBSebiCc59-nVLpymb6RJQpl6QLiYkB_eaMpguuAtnPlWBPZ3bPtJ37EqY-X5rpNR4zwCCdsbF84zv_maHFMLEV73JkT0lm8ft7jWbTzcpW9rU-BeNRM0ACq8nDjv95wdBuouvwBDqlNajmKSI4Tgw')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      ></div>
+      {/* ── CTA Banner ── */}
+      <section className="max-w-6xl mx-auto px-5 lg:px-8 py-16 lg:py-20">
+        <div className="bg-primary rounded-2xl p-8 lg:p-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+          <div className="relative z-10 lg:flex items-center justify-between gap-8">
+            <div className="mb-6 lg:mb-0">
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">Ready to start your recovery?</h2>
+              <p className="text-white/60 text-sm">Book online in under 2 minutes. No account, no OTP, no hassle.</p>
+            </div>
+            <Link href="/booking" className="inline-flex items-center gap-2 bg-white text-primary font-bold px-8 py-3.5 rounded-xl hover:bg-white/95 transition-colors shrink-0 text-base shadow-lg">
+              <span className="material-symbols-outlined">calendar_month</span>
+              Book Appointment
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-border-grey bg-white">
+        <div className="max-w-6xl mx-auto px-5 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 p-1">
+              <img src="/skct.png" alt="SKCT" className="w-full h-full object-contain" />
+            </div>
+            <p className="text-sm text-text-muted">Sri Kambathukarar Physiotherapy &amp; Rehabilitation Center</p>
+          </div>
+          <Link href="/stafflogin" className="text-sm text-text-muted hover:text-primary transition-colors font-medium">
+            Staff Login →
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }
