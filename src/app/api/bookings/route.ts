@@ -113,12 +113,12 @@ export async function POST(req: NextRequest) {
   return ok({ ...booking, patient_name: name, patient_phone: phone }, 201);
 }
 
+// SKCT operates Mon–Sat; generate session dates excluding Sunday only
 function generateSessionDates(startDate: string, count: number): string[] {
   const dates: string[] = [];
   const current = new Date(startDate);
   while (dates.length < count) {
-    const day = current.getDay();
-    if (day !== 0 && day !== 6) dates.push(current.toISOString().split('T')[0]);
+    if (current.getDay() !== 0) dates.push(current.toISOString().split('T')[0]); // exclude Sunday
     current.setDate(current.getDate() + 1);
   }
   return dates;

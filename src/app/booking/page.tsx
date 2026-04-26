@@ -23,11 +23,12 @@ const STEPS: { key: Exclude<Step, "success">; label: string }[] = [
   { key: "confirm", label: "Confirm" },
 ];
 
-const getWeekdays = (from: Date, count: number) => {
+// SKCT operates Mon–Sat; only Sunday is excluded
+const getAvailableDays = (from: Date, count: number) => {
   const days: string[] = [];
   const d = new Date(from);
   while (days.length < count) {
-    if (d.getDay() !== 0 && d.getDay() !== 6) days.push(d.toISOString().split("T")[0]);
+    if (d.getDay() !== 0) days.push(d.toISOString().split("T")[0]); // exclude Sunday only
     d.setDate(d.getDate() + 1);
   }
   return days;
@@ -55,7 +56,7 @@ export default function BookingPage() {
   useEffect(() => {
     setDoctorsLoading(true);
     fetch("/api/doctors").then((r) => r.json()).then((d) => setDoctors(d.data ?? [])).finally(() => setDoctorsLoading(false));
-    const dates = getWeekdays(new Date(), 14);
+    const dates = getAvailableDays(new Date(), 14);
     setAvailableDates(dates);
     setSelectedDate(dates[0]);
   }, []);
@@ -297,7 +298,7 @@ export default function BookingPage() {
               <div className="space-y-4">
                 <div className="card p-6">
                   <h2 className="font-bold text-text-dark mb-0.5 text-lg">Select Date</h2>
-                  <p className="text-xs text-text-muted mb-4">தேதி தேர்வு · Weekdays only</p>
+                  <p className="text-xs text-text-muted mb-4">தேதி தேர்வு · Mon–Sat (Sunday closed)</p>
                   <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                     {availableDates.map((d) => {
                       const date = new Date(d);
