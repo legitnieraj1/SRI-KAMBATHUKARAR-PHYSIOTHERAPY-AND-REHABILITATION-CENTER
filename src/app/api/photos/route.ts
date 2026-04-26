@@ -25,10 +25,14 @@ export async function POST(req: NextRequest) {
 
   if (!session) return err('Session not found', 404);
 
+  // photos.doctor_id is FK → users.id, so we need the doctor's user_id
+  const { data: doctorRow } = await supabaseAdmin
+    .from('doctors').select('id, user_id').eq('id', session.doctor_id).single();
+
   if (user.role === 'DOCTOR') {
-    const { data: doctor } = await supabaseAdmin
+    const myDoctorRow = await supabaseAdmin
       .from('doctors').select('id').eq('user_id', user.userId).single();
-    if (!doctor || session.doctor_id !== doctor.id) return err('Forbidden', 403);
+    if (!myDoctorRow.data || session.doctor_id !== myDoctorRow.data.id) return err('Forbidden', 403);
   }
 
   const ext = file.name.split('.').pop() ?? 'jpg';
@@ -50,7 +54,7 @@ export async function POST(req: NextRequest) {
     .from('photos')
     .insert({
       session_id: sessionId,
-      doctor_id: session.doctor_id,
+      doctor_id: doctorRow?.user_id ?? null,  // photos.doctor_id → users.id (not doctors.id)
       file_url: publicUrl,
       file_size: file.size,
       photo_timestamp: new Date().toISOString(),
