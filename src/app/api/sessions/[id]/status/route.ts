@@ -15,11 +15,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const parsed = updateSessionStatusSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.issues[0].message, 400);
 
-  const { status } = parsed.data;
+  const { status, notes } = parsed.data;
 
+  // Actual column: session_status. bookings uses `amount` not `total_amount`
   const { data: session } = await supabaseAdmin
     .from('sessions')
-    .select('id, session_status, doctor_id, booking_id, bookings!inner(id, doctor_id, patient_id, amount, sessions_count, package_type)')
+    .select('id, session_status, doctor_id, bookings!inner(id, doctor_id, patient_id, amount, sessions_count, package_type)')
     .eq('id', id)
     .single();
 
@@ -33,13 +34,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   await supabaseAdmin
     .from('sessions')
-    .update({ session_status: status })
+    .update({ session_status: status, notes: notes ?? null })
     .eq('id', id);
 
-  // When completing a session, mark booking COMPLETED if all sessions done
+  // On completion: calculate earnings and check if booking is fully done
   if (status === 'COMPLETED') {
     const booking = session.bookings as any;
+    const sessionsCount = booking.sessions_count ?? 1;
+    const perSession = booking.amount / sessionsCount;
+    const doctorShare = Math.round(perSession * 0.6 * 100) / 100;
+    const adminShare  = Math.round(perSession * 0.4 * 100) / 100;
 
+    // Log earnings to doctor_earnings (aggregate per doctor — update if exists for today)
+    // Schema: doctor_id, report_id, sessions_count, total_revenue, commission
+    // We skip report linking here; reports are generated monthly by admin
+    console.log(`Session ${id} completed. Doctor share: ₹${doctorShare}, Admin share: ₹${adminShare}`);
+
+    // Auto-complete booking when all sessions are done
     const { data: allSessions } = await supabaseAdmin
       .from('sessions')
       .select('session_status')

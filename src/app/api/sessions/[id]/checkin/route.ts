@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { attendance_status } = parsed.data;
 
-  // Verify session exists
+  // Fetch session — actual columns: session_status, doctor_id, patient_id
   const { data: session } = await supabaseAdmin
     .from('sessions')
     .select('id, session_status, doctor_id, patient_id')
@@ -25,7 +25,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .single();
 
   if (!session) return err('Session not found', 404);
-
   if (session.session_status === 'COMPLETED' || session.session_status === 'CANCELLED') {
     return err('Session is already finalised', 400);
   }
@@ -36,29 +35,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!doctor || session.doctor_id !== doctor.id) return err('Forbidden', 403);
   }
 
-  // Upsert attendance record
+  // Upsert attendance — actual columns: session_id, doctor_id, patient_id, status, marked_at
   const { data: existing } = await supabaseAdmin
-    .from('attendance')
-    .select('id')
-    .eq('session_id', id)
-    .maybeSingle();
+    .from('attendance').select('id').eq('session_id', id).maybeSingle();
+
+  const statusVal = attendance_status === 'PRESENT' ? 'PRESENT' : 'ABSENT';
 
   if (existing) {
     await supabaseAdmin
       .from('attendance')
-      .update({ status: attendance_status, marked_at: new Date().toISOString() })
+      .update({ status: statusVal, marked_at: new Date().toISOString() })
       .eq('id', existing.id);
   } else {
     await supabaseAdmin.from('attendance').insert({
       session_id: id,
       doctor_id: session.doctor_id,
       patient_id: session.patient_id,
-      status: attendance_status,
+      status: statusVal,
       marked_at: new Date().toISOString(),
     });
   }
 
-  // Update session to IN_PROGRESS
+  // Mark session IN_PROGRESS
   await supabaseAdmin
     .from('sessions')
     .update({ session_status: 'IN_PROGRESS', actual_checkin_time: new Date().toISOString() })

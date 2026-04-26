@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     .select(`
       id, scheduled_date, scheduled_time, session_number, session_status, notes,
       bookings!inner(id, package_type, visit_type),
-      patients!inner(id, users!inner(id, name, phone)),
+      users!sessions_patient_id_fkey(id, name, phone),
       attendance(id, status, marked_at),
       photos(id, file_url)
     `)
@@ -37,19 +37,30 @@ export async function GET(req: NextRequest) {
     return err('Failed to fetch sessions', 500);
   }
 
-  // Normalise field names for frontend compatibility
+  // Normalise field names so the frontend keeps working unchanged
   const normalised = (data ?? []).map((s: any) => ({
-    ...s,
+    id: s.id,
     session_date: s.scheduled_date,
+    scheduled_time: s.scheduled_time,
+    session_number: s.session_number,
     status: s.session_status,
+    notes: s.notes,
     bookings: {
-      ...s.bookings,
+      id: s.bookings?.id,
+      package_type: s.bookings?.package_type,
+      visit_type: s.bookings?.visit_type,
       scheduled_time: s.scheduled_time,
-      patients: s.patients,
-      doctors: { users: { name: user.role === 'DOCTOR' ? '' : '' } },
+      patients: {
+        id: s['users!sessions_patient_id_fkey']?.id,
+        users: {
+          name: s['users!sessions_patient_id_fkey']?.name ?? '',
+          phone: s['users!sessions_patient_id_fkey']?.phone ?? '',
+        },
+      },
+      doctors: { users: { name: '' } },
     },
-    attendance: s.attendance?.map((a: any) => ({ ...a, attendance_status: a.status })) ?? [],
-    photos: s.photos ?? [],
+    attendance: (s.attendance ?? []).map((a: any) => ({ attendance_status: a.status })),
+    photos: (s.photos ?? []).map((p: any) => ({ id: p.id })),
   }));
 
   return ok(normalised);

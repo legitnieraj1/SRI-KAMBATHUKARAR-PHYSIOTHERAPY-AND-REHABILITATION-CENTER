@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     .select(`
       id, package_type, visit_type, start_date, scheduled_time, status, amount, sessions_count, notes, created_at,
       doctors!inner(id, specialization, users!inner(id, name, phone)),
-      patients!inner(id, users!inner(id, name, phone))
+      users!bookings_patient_id_fkey(id, name, phone)
     `)
     .order('start_date', { ascending: false });
 
@@ -37,31 +37,26 @@ export async function POST(req: NextRequest) {
 
   const { name, phone, doctor_id, package_type, visit_type, start_date, scheduled_time, notes } = parsed.data;
 
-  // Find or create user by phone (any role — phone is unique)
+  // Find or create user by phone — patient_id in bookings/sessions is users.id
   let { data: user } = await supabaseAdmin
     .from('users').select('id, role').eq('phone', phone).single();
 
   if (!user) {
     const { data: newUser, error: userErr } = await supabaseAdmin
-      .from('users').insert({ phone, name, role: 'PATIENT' }).select('id, role').single();
-    if (userErr || !newUser) return err('Failed to create patient record', 500);
+      .from('users')
+      .insert({ phone, name, role: 'PATIENT' })
+      .select('id, role')
+      .single();
+    if (userErr || !newUser) {
+      console.error('USER INSERT ERROR:', JSON.stringify(userErr));
+      return err('Failed to create patient account', 500);
+    }
     user = newUser;
   } else if (user.role === 'PATIENT') {
     await supabaseAdmin.from('users').update({ name }).eq('id', user.id);
   }
 
-  // Find or create patient record
-  let { data: patient } = await supabaseAdmin
-    .from('patients').select('id').eq('user_id', user.id).single();
-
-  if (!patient) {
-    const { data: newPatient, error: patErr } = await supabaseAdmin
-      .from('patients').insert({ user_id: user.id }).select('id').single();
-    if (patErr || !newPatient) return err('Failed to create patient profile', 500);
-    patient = newPatient;
-  }
-
-  // Check slot not already taken (via sessions table — sessions store the actual time)
+  // Check slot not already taken
   const { data: conflict } = await supabaseAdmin
     .from('sessions')
     .select('id')
@@ -77,10 +72,11 @@ export async function POST(req: NextRequest) {
   const amount = package_type === 'ONE_DAY' ? 100 : 300;
   const sessions_count = package_type === 'ONE_DAY' ? 1 : 5;
 
+  // patient_id in bookings = users.id (NOT patients.id)
   const { data: booking, error: bookingError } = await supabaseAdmin
     .from('bookings')
     .insert({
-      patient_id: patient.id,
+      patient_id: user.id,
       doctor_id,
       package_type,
       visit_type,
@@ -99,12 +95,12 @@ export async function POST(req: NextRequest) {
     return err(`Failed to create booking: ${bookingError?.message ?? 'unknown'}`, 500);
   }
 
-  // Create individual session records
+  // Create session records — patient_id in sessions = users.id too
   const sessionDates = generateSessionDates(start_date, sessions_count);
   const sessionRows = sessionDates.map((date, i) => ({
     booking_id: booking.id,
     doctor_id,
-    patient_id: patient!.id,
+    patient_id: user!.id,
     scheduled_date: date,
     scheduled_time,
     session_number: i + 1,
