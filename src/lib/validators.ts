@@ -60,3 +60,13 @@ export const createDoctorSchema = z.object({
   license_number: z.string().min(3),
   email: z.string().email().optional(),
 });
+
+export const updateDoctorSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  phone: z.string().min(10).max(15).optional(),
+  email: z.string().email().optional().nullable(),
+  password: z.string().min(6).optional(),
+  specialization: z.string().min(1).optional(),
+  license_number: z.string().min(3).optional(),
+  is_active: z.boolean().optional(),
+});

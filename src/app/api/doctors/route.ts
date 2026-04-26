@@ -5,18 +5,31 @@ import { hashPassword } from '@/lib/auth';
 import { createDoctorSchema } from '@/lib/validators';
 import type { AuthPayload } from '@/types';
 
-export async function GET() {
-  const { data, error } = await supabaseAdmin
+export async function GET(req: NextRequest) {
+  const showAll = req.nextUrl.searchParams.get('all') === 'true';
+
+  // Only SUPER_ADMIN can see all (including inactive) doctors
+  if (showAll) {
+    const authResult = await requireAuth(['SUPER_ADMIN']);
+    if (authResult instanceof Response) return authResult;
+  }
+
+  let query = supabaseAdmin
     .from('doctors')
     .select(`
       id,
       specialization,
       license_number,
       is_active,
+      availability_start,
+      availability_end,
       users!inner(id, name, phone, email)
     `)
-    .eq('is_active', true);
+    .order('is_active', { ascending: false });
 
+  if (!showAll) query = query.eq('is_active', true);
+
+  const { data, error } = await query;
   if (error) return err('Failed to fetch doctors', 500);
   return ok(data);
 }
