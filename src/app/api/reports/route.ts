@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     total_sessions:    totalSessions,
     total_revenue:     totalRevenue,
     super_admin_share: superAdminShare,
-    status:            'DRAFT',
+    status:            'GENERATED',
     generated_at:      new Date().toISOString(),
     generated_by:      user.userId,
   };

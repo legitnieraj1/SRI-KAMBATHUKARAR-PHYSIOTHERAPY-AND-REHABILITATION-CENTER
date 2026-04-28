@@ -10,7 +10,7 @@ interface Report {
   total_revenue: number;
   total_doctor_payout: number;
   total_admin_earnings: number;
-  status: "DRAFT" | "LOCKED";
+  status: "GENERATED" | "LOCKED" | "SETTLED";
   generated_at: string;
   doctor_breakdown: Array<{ doctor_id: string; name: string; total: number; sessions: number }>;
 }
@@ -137,7 +137,7 @@ export default function AdminReportsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className={`badge ${r.status === "LOCKED" ? "badge-red" : "badge-yellow"}`}>{r.status}</span>
+                  <span className={`badge ${r.status === "LOCKED" ? "badge-red" : r.status === "SETTLED" ? "badge-green" : "badge-yellow"}`}>{r.status}</span>
                   <span className="material-symbols-outlined text-text-muted text-lg">{expandedId === r.id ? "expand_less" : "expand_more"}</span>
                 </div>
               </div>
@@ -186,7 +186,7 @@ export default function AdminReportsPage() {
                     </div>
                   )}
 
-                  {r.status !== "LOCKED" && (
+                  {r.status === "GENERATED" && (
                     <button
                       onClick={() => lock(r.id)}
                       disabled={locking === r.id}
