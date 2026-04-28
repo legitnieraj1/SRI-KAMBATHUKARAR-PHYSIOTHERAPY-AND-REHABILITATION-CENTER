@@ -10,6 +10,7 @@ interface AdminData {
     total_patients: number;
     active_doctors: number;
     monthly_revenue: number;
+    collected: number;
     admin_earnings: number;
     today_sessions: number;
     today_completed: number;
@@ -89,7 +90,7 @@ export default function AdminDashboard() {
         <>
           {/* KPI Row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <KpiCard accent label="Monthly Revenue" value={`₹${((stats?.monthly_revenue ?? 0) / 1000).toFixed(1)}K`} sub={`Your share ₹${((stats?.admin_earnings ?? 0) / 1000).toFixed(1)}K`} icon="payments" />
+            <KpiCard accent label="Monthly Revenue" value={`₹${((stats?.monthly_revenue ?? 0) / 1000).toFixed(1)}K`} sub={`Collected ₹${((stats?.collected ?? 0) / 1000).toFixed(1)}K · Your share ₹${((stats?.admin_earnings ?? 0) / 1000).toFixed(1)}K`} icon="payments" />
             <KpiCard label="Total Patients" value={stats?.total_patients ?? 0} icon="group" />
             <KpiCard label="Active Doctors" value={stats?.active_doctors ?? 0} icon="stethoscope" />
             <KpiCard label="Pending Bookings" value={stats?.pending_bookings ?? 0} sub={`${stats?.today_sessions ?? 0} sessions today`} icon="pending_actions" />
