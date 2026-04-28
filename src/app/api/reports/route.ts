@@ -7,22 +7,26 @@ import type { AuthPayload } from '@/types';
 // Normalise a DB row → shape the frontend Report interface expects
 function normaliseReport(r: any) {
   const earnings: any[] = r.doctor_earnings ?? [];
-  const totalDoctorPayout = earnings.reduce((s: number, e: any) => s + (e.commission ?? 0), 0);
+  const totalRevenue     = r.total_revenue    ?? 0;
+  const adminShare       = r.super_admin_share ?? 0;
+  // Doctor payout derived from same total so the three numbers always reconcile:
+  // totalRevenue = adminShare + totalDoctorPayout  ✓
+  const totalDoctorPayout = Math.round((totalRevenue - adminShare) * 100) / 100;
 
   const doctorBreakdown = earnings.map((e: any) => ({
     doctor_id: e.doctor_id,
-    name: e.doctors?.users?.name ?? 'Unknown',
-    sessions: e.sessions_count ?? 0,
-    total: e.commission ?? 0,
+    name:      e.doctors?.users?.name ?? 'Unknown',
+    sessions:  e.sessions_count ?? 0,
+    total:     e.commission ?? 0,
   }));
 
   return {
     id:                   r.id,
     month:                (r.month as string).slice(0, 7), // "2026-04-01" → "2026-04"
     total_sessions:       r.total_sessions ?? 0,
-    total_revenue:        r.total_revenue ?? 0,
+    total_revenue:        totalRevenue,
     total_doctor_payout:  totalDoctorPayout,
-    total_admin_earnings: r.super_admin_share ?? 0,
+    total_admin_earnings: adminShare,
     status:               r.status,
     generated_at:         r.generated_at,
     doctor_breakdown:     doctorBreakdown,
