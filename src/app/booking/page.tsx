@@ -284,6 +284,7 @@ export default function BookingPage() {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -305,7 +306,10 @@ export default function BookingPage() {
     setSlotsLoading(true);
     fetch(`/api/doctors/${selectedDoctor.id}/availability?date=${selectedDate}`)
       .then((r) => r.json())
-      .then((d) => setAvailableSlots(d.data?.available_slots ?? []))
+      .then((d) => {
+        setAvailableSlots(d.data?.available_slots ?? []);
+        setBookedSlots(d.data?.booked_slots ?? []);
+      })
       .finally(() => setSlotsLoading(false));
   }, [selectedDoctor, selectedDate]);
 
@@ -649,19 +653,51 @@ export default function BookingPage() {
                     </div>
                     {slotsLoading && <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />}
                   </div>
-                  {!slotsLoading && availableSlots.length === 0 ? (
+                  {!slotsLoading && availableSlots.length === 0 && bookedSlots.length === 0 ? (
                     <div className="text-center py-6">
                       <span className="material-symbols-outlined text-3xl text-primary/30 block mb-2">schedule</span>
                       <p className="text-sm text-text-muted">No slots available — try another date</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
-                      {availableSlots.map((slot) => (
-                        <button key={slot} type="button" onClick={() => setSelectedSlot(slot)}
-                          className={`rounded-lg py-2.5 px-2 text-xs font-semibold border-2 transition-all ${selectedSlot === slot ? "bg-primary border-primary text-white" : "bg-white border-border-grey text-text-dark hover:border-primary/40"}`}
-                        >{slot}</button>
-                      ))}
-                    </div>
+                    <>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+                        {[...availableSlots, ...bookedSlots]
+                          .sort((a, b) => a.localeCompare(b))
+                          .map((slot) => {
+                            const isBooked = bookedSlots.includes(slot);
+                            const isSelected = selectedSlot === slot;
+                            return (
+                              <button
+                                key={slot}
+                                type="button"
+                                disabled={isBooked}
+                                onClick={() => !isBooked && setSelectedSlot(slot)}
+                                title={isBooked ? "Already booked" : undefined}
+                                className={`relative rounded-lg py-2.5 px-2 text-xs font-semibold border-2 transition-all
+                                  ${isBooked
+                                    ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed line-through"
+                                    : isSelected
+                                      ? "bg-primary border-primary text-white"
+                                      : "bg-white border-border-grey text-text-dark hover:border-primary/40"
+                                  }`}
+                              >
+                                {slot}
+                                {isBooked && (
+                                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-gray-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-white" style={{ fontSize: "9px" }}>lock</span>
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                      </div>
+                      {bookedSlots.length > 0 && (
+                        <p className="text-[11px] text-text-muted mt-3 flex items-center gap-1.5">
+                          <span className="w-3 h-3 rounded bg-gray-200 inline-block" />
+                          Grayed slots already booked · வேறு நேரம் தேர்ந்தெடுக்கவும்
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
                 <div className="card p-6">
