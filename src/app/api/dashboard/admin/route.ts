@@ -48,7 +48,7 @@ export async function GET() {
     supabaseAdmin
       .from('bookings')
       .select(`
-        id, package_type, visit_type, start_date, status, amount, created_at,
+        id, package_type, visit_type, start_date, scheduled_time, status, amount, created_at,
         doctors!inner(id, users!inner(id, name)),
         users!bookings_patient_id_fkey(id, name, phone)
       `)
@@ -67,7 +67,8 @@ export async function GET() {
       id:           b.id,
       package_type: b.package_type,
       visit_type:   b.visit_type,
-      start_date:   b.start_date,
+      start_date:      b.start_date,
+      scheduled_time:  (() => { const t: string = b.scheduled_time ?? ''; return t.length > 5 ? t.slice(0, 5) : t; })(),
       status:       b.status,
       total_amount: b.amount,       // frontend reads b.total_amount
       created_at:   b.created_at,

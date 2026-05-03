@@ -21,6 +21,7 @@ interface AdminData {
     package_type: string;
     visit_type: string;
     start_date: string;
+    scheduled_time: string;
     status: string;
     total_amount: number;
     created_at: string;
@@ -160,7 +161,7 @@ export default function AdminDashboard() {
                     <th>Patient</th>
                     <th>Doctor</th>
                     <th>Package</th>
-                    <th>Date</th>
+                    <th>Date &amp; Time</th>
                     <th>Amount</th>
                     <th>Status</th>
                   </tr>
@@ -180,7 +181,10 @@ export default function AdminDashboard() {
                           {b.package_type === "ONE_DAY" ? "1-Day" : "5-Day"} · {b.visit_type === "CENTER" ? "Center" : "Home"}
                         </span>
                       </td>
-                      <td className="text-text-muted">{new Date(b.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</td>
+                      <td>
+                        <p className="text-sm text-text-dark font-medium">{new Date(b.start_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
+                        {b.scheduled_time && <p className="text-xs text-text-muted">{b.scheduled_time}</p>}
+                      </td>
                       <td className="font-bold text-primary">₹{b.total_amount}</td>
                       <td><span className={STATUS_BADGE[b.status] ?? "badge badge-grey"}>{b.status}</span></td>
                     </tr>
@@ -198,7 +202,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-text-dark truncate">{b.patients.users.name}</p>
-                    <p className="text-xs text-text-muted">Dr. {b.doctors.users.name} · {b.start_date}</p>
+                    <p className="text-xs text-text-muted">Dr. {b.doctors.users.name} · {new Date(b.start_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}{b.scheduled_time ? ` · ${b.scheduled_time}` : ""}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-bold text-primary">₹{b.total_amount}</p>
