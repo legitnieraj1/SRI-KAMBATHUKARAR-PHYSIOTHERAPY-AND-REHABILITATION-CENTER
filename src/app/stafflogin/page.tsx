@@ -150,10 +150,10 @@ export default function StaffLoginPage() {
           </form>
 
           <div className="mt-8 pt-6 border-t border-border-grey text-center space-y-3">
-            <p className="text-sm text-text-muted">
-              Patient?{" "}
-              <Link href="/login" className="text-primary font-semibold hover:underline underline-offset-2">
-                Login with OTP
+            <p className="text-xs text-text-muted">
+              Need to book an appointment?{" "}
+              <Link href="/booking" className="text-primary font-semibold hover:underline underline-offset-2">
+                Book here
               </Link>
             </p>
             <Link href="/" className="text-xs text-text-muted hover:text-primary transition-colors flex items-center justify-center gap-1">

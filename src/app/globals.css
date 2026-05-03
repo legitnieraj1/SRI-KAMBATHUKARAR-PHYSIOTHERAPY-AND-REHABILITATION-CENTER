@@ -362,6 +362,20 @@
     100% { background-position: -200% 0; }
   }
 
+  /* ── Booking success animations ── */
+  @keyframes ping {
+    75%, 100% { transform: scale(2); opacity: 0; }
+  }
+  @keyframes booking-slide-up {
+    from { opacity: 0; transform: translateY(48px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes booking-icon-pop {
+    0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+    60%  { transform: scale(1.15) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
   /* ── Mobile bottom-nav ── */
   .mobile-nav {
     background: rgba(255,255,255,0.95);

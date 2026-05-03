@@ -4,49 +4,49 @@ import Link from "next/link";
 
 const SERVICES = [
   {
-    icon: "child_care",
-    title: "Specialized for Children",
-    desc: "Expert physiotherapy for children with intellectual and developmental disabilities — tailored programs, not generic care.",
-  },
-  {
     icon: "directions_run",
-    title: "Motor Rehabilitation",
-    desc: "Targeted therapy to improve physical mobility, balance, and coordination for children with motor challenges.",
+    title: "Orthopedic & Sports Rehab",
+    desc: "Recovery from injuries, joint pain, post-surgery rehabilitation, sports trauma, and movement restoration for working adults and athletes.",
   },
   {
-    icon: "psychology",
-    title: "Developmental Support",
-    desc: "Specially designed programs that address medical, social, and educational needs of children with special needs.",
+    icon: "elderly",
+    title: "Geriatric Physiotherapy",
+    desc: "Mobility, balance, and strength programs for seniors — pain management, fall prevention, and post-stroke recovery.",
+  },
+  {
+    icon: "self_improvement",
+    title: "Neurological Therapy",
+    desc: "Stroke rehabilitation, Parkinson's care, spinal cord recovery, and other nerve-related movement therapy for adults of any age.",
   },
   {
     icon: "home",
     title: "Home Visit Services",
-    desc: "Our therapists come to your home — comfortable, familiar-environment therapy that works better for many children.",
+    desc: "Therapist visits your home — for elderly patients, post-surgery recovery, or anyone who prefers care without traveling.",
   },
   {
-    icon: "school",
-    title: "Sri Kambathukarar Special School",
-    desc: "SKSS provides specialized education alongside therapy — a holistic approach to rehabilitation and learning.",
+    icon: "child_care",
+    title: "Pediatric & Special Needs",
+    desc: "Continuing our trust's heritage — specialized programs for children with developmental, motor, or intellectual challenges.",
   },
   {
     icon: "photo_camera",
-    title: "Progress Documentation",
-    desc: "Every session is recorded with photos and notes so families can clearly see their child's recovery journey.",
+    title: "Documented Progress",
+    desc: "Every session tracked with photos and notes so you can see clear, measurable improvement over time.",
   },
 ];
 
 const TESTIMONIALS = [
   {
-    text: "The physiotherapists teach the exercises in a very clear and patient way. My child has improved so much.",
-    author: "Parent, Komarapalayam",
+    text: "After my knee surgery the home visit therapy got me back on my feet faster than I expected. Very clear instructions every session.",
+    author: "Patient, Komarapalayam",
   },
   {
-    text: "Specialized care for children with special needs. They truly understand what these children require.",
-    author: "Parent, Pallipalayam",
+    text: "My father had a stroke last year. The therapists are patient and skilled — his mobility has improved a lot.",
+    author: "Patient's Family, Pallipalayam",
   },
   {
-    text: "The home visit service is incredibly helpful. Professional care without the stress of travel for my child.",
-    author: "Parent, Erode District",
+    text: "Affordable, professional, and they actually explain the exercises. Best physiotherapy in the Erode district.",
+    author: "Patient, Erode District",
   },
 ];
 
@@ -97,11 +97,11 @@ export default function LandingPage() {
               Komarapalayam, Tamil Nadu
             </span>
             <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-text-dark leading-tight mb-4">
-              Specialized Care<br />
-              <span className="text-primary">for Special Children.</span>
+              Expert Physiotherapy.<br />
+              <span className="text-primary">For Every Body.</span>
             </h1>
             <p className="text-text-muted text-base lg:text-lg leading-relaxed mb-2">
-              Sri Kambathukarar Charitable Trust provides expert physiotherapy and rehabilitation for children with intellectual and developmental disabilities.
+              Sri Kambathukarar Charitable Trust offers professional physiotherapy and rehabilitation for everyone — orthopedic recovery, sports injuries, geriatric care, neurological therapy, and our trusted pediatric programs.
             </p>
             <p className="text-text-muted/70 text-sm mb-8">
               ஸ்ரீ கம்பத்துக்காரர் சேவை அறக்கட்டளை · கோமாரபாளையம்
@@ -118,7 +118,7 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-8 mt-8">
               {[
-                { value: "500+", label: "Children Supported" },
+                { value: "1000+", label: "Patients Treated" },
                 { value: "₹100", label: "Starting Price" },
                 { value: "6 Days", label: "A Week" },
               ].map((s) => (
@@ -137,7 +137,7 @@ export default function LandingPage() {
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-white text-2xl">child_care</span>
+                    <span className="material-symbols-outlined text-white text-2xl">healing</span>
                   </div>
                   <div>
                     <p className="font-bold text-text-dark">Book an Appointment</p>
@@ -197,25 +197,34 @@ export default function LandingPage() {
             <div>
               <span className="text-xs font-bold text-primary uppercase tracking-widest mb-3 block">About SKCT</span>
               <h2 className="text-2xl lg:text-3xl font-bold text-text-dark mb-4">
-                A Trust Built for Children Who Need It Most
+                Trusted Physiotherapy for Komarapalayam
               </h2>
               <p className="text-text-muted text-base leading-relaxed mb-4">
-                Sri Kambathukarar Charitable Trust (SKCT) in Komarapalayam provides specialized physiotherapy services
-                for children with intellectual and developmental disabilities — addressing their motor, medical, and
-                social challenges through expert care.
+                Sri Kambathukarar Charitable Trust (SKCT) is a community-rooted physiotherapy and rehabilitation centre
+                serving patients across Erode District — from working professionals and athletes recovering from injury,
+                to seniors managing pain and mobility, to children with special needs.
               </p>
               <p className="text-text-muted text-base leading-relaxed mb-6">
-                Our vision is a full multi-specialty rehabilitation center offering therapies, education, and support
-                programs so every child can live with greater independence and dignity.
+                Our vision is a full multi-specialty rehabilitation centre offering therapy, education, and support
+                programs — combining clinical expertise with affordable, accessible care.
               </p>
               <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 p-4 bg-background-soft rounded-xl">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-primary text-xl">verified</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-text-dark text-sm">Trained, Experienced Therapists</p>
+                    <p className="text-xs text-text-muted">Licensed physiotherapists with expertise across orthopedic, neurological, and pediatric care</p>
+                  </div>
+                </div>
                 <div className="flex items-center gap-3 p-4 bg-background-soft rounded-xl">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <span className="material-symbols-outlined text-primary text-xl">school</span>
                   </div>
                   <div>
                     <p className="font-bold text-text-dark text-sm">Sri Kambathukarar Special School (SKSS)</p>
-                    <p className="text-xs text-text-muted">Specialized education for children with special needs, alongside therapy</p>
+                    <p className="text-xs text-text-muted">Our sister institution serving children with developmental needs</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-background-soft rounded-xl">
@@ -224,7 +233,7 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <p className="font-bold text-text-dark text-sm">Community-Focused Care</p>
-                    <p className="text-xs text-text-muted">Identification, support programs, and home services for families across Erode District</p>
+                    <p className="text-xs text-text-muted">Affordable rates, home-visit options, and dedicated support for the Komarapalayam region</p>
                   </div>
                 </div>
               </div>
@@ -354,7 +363,7 @@ export default function LandingPage() {
           <div className="relative z-10 lg:flex items-center justify-between gap-8">
             <div className="mb-6 lg:mb-0">
               <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">
-                Book your child&apos;s first session today
+                Book your first session today
               </h2>
               <p className="text-white/60 text-sm">
                 Online booking in under 2 minutes. No account required. Payment at the clinic.
@@ -390,7 +399,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="text-xs text-text-muted leading-relaxed">
-                Specialized physiotherapy and rehabilitation for children with intellectual and developmental disabilities in Komarapalayam, Tamil Nadu.
+                Professional physiotherapy and rehabilitation for everyone — orthopedic, geriatric, neurological, and pediatric care in Komarapalayam, Tamil Nadu.
               </p>
             </div>
 

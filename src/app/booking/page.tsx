@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import PortalLayout from "@/components/layout/PortalLayout";
 
 interface Doctor {
   id: string;
@@ -15,6 +13,13 @@ type Step = "identity" | "doctor" | "package" | "datetime" | "confirm" | "succes
 type PackageType = "ONE_DAY" | "FIVE_DAY";
 type VisitType = "CENTER" | "HOME";
 
+interface Address {
+  door: string;
+  area: string;
+  city: string;
+  pincode: string;
+}
+
 const STEPS: { key: Exclude<Step, "success">; label: string }[] = [
   { key: "identity", label: "Your Info" },
   { key: "doctor", label: "Doctor" },
@@ -23,21 +28,255 @@ const STEPS: { key: Exclude<Step, "success">; label: string }[] = [
   { key: "confirm", label: "Confirm" },
 ];
 
-// SKCT operates Mon–Sat; only Sunday is excluded
 const getAvailableDays = (from: Date, count: number) => {
   const days: string[] = [];
   const d = new Date(from);
   while (days.length < count) {
-    if (d.getDay() !== 0) days.push(d.toISOString().split("T")[0]); // exclude Sunday only
+    if (d.getDay() !== 0) days.push(d.toISOString().split("T")[0]);
     d.setDate(d.getDate() + 1);
   }
   return days;
 };
 
+// ── Confetti particles ──────────────────────────────────────────────────────
+const CONFETTI_PIECES = [
+  { color: "#0F766E", x: -100, y: -140, r: 720, size: 10, delay: 0 },
+  { color: "#14B8A6", x: 100, y: -130, r: -540, size: 8, delay: 80 },
+  { color: "#F59E0B", x: -150, y: -60, r: 360, size: 12, delay: 40 },
+  { color: "#F59E0B", x: 150, y: -80, r: -720, size: 6, delay: 120 },
+  { color: "#14B8A6", x: -60, y: -160, r: 540, size: 7, delay: 60 },
+  { color: "#0F766E", x: 60, y: -170, r: -360, size: 9, delay: 100 },
+  { color: "#FBBF24", x: -180, y: 20, r: 720, size: 8, delay: 20 },
+  { color: "#5EEAD4", x: 180, y: 10, r: -540, size: 10, delay: 90 },
+  { color: "#0F766E", x: -120, y: 80, r: 360, size: 6, delay: 50 },
+  { color: "#F59E0B", x: 120, y: 70, r: -720, size: 11, delay: 130 },
+  { color: "#14B8A6", x: 30, y: 150, r: 540, size: 8, delay: 70 },
+  { color: "#FBBF24", x: -30, y: 160, r: -360, size: 7, delay: 110 },
+];
+
+function ConfettiPiece({ color, x, y, r, size, delay }: typeof CONFETTI_PIECES[0]) {
+  const [fired, setFired] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setFired(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        width: size,
+        height: size,
+        borderRadius: size % 2 === 0 ? "50%" : "2px",
+        background: color,
+        pointerEvents: "none",
+        transition: fired ? "transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.8s ease" : "none",
+        transform: fired
+          ? `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotate(${r}deg)`
+          : `translate(-50%, -50%) rotate(0deg)`,
+        opacity: fired ? 0 : 1,
+        zIndex: 20,
+      }}
+    />
+  );
+}
+
+// ── Premium Success Page ────────────────────────────────────────────────────
+function SuccessPage({
+  bookingId,
+  name,
+  phone,
+  selectedDoctor,
+  selectedDate,
+  selectedSlot,
+  packageType,
+  visitType,
+  price,
+  sessionCount,
+  perSession,
+  address,
+  notes,
+}: {
+  bookingId: string;
+  name: string;
+  phone: string;
+  selectedDoctor: Doctor;
+  selectedDate: string;
+  selectedSlot: string;
+  packageType: PackageType;
+  visitType: VisitType;
+  price: number;
+  sessionCount: number;
+  perSession: number;
+  address: Address;
+  notes: string;
+}) {
+  const [iconVisible, setIconVisible] = useState(false);
+  const [cardVisible, setCardVisible] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setCardVisible(true), 60);
+    const t2 = setTimeout(() => setIconVisible(true), 200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  const dateStr = new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
+    weekday: "short", day: "numeric", month: "short", year: "numeric",
+  });
+
+  const rows = [
+    { icon: "person", label: "Patient", value: `${name}  ·  +91 ${phone}` },
+    { icon: "stethoscope", label: "Doctor", value: `Dr. ${selectedDoctor.users.name} · ${selectedDoctor.specialization}` },
+    { icon: visitType === "CENTER" ? "business" : "home", label: "Visit Type", value: visitType === "CENTER" ? "Center Visit — Komarapalayam" : "Home Visit" },
+    ...(visitType === "HOME" && address.door ? [{
+      icon: "location_on",
+      label: "Your Address",
+      value: [address.door, address.area, address.city, address.pincode].filter(Boolean).join(", "),
+    }] : []),
+    { icon: "calendar_today", label: "Date & Time", value: `${dateStr}  ·  ${selectedSlot}` },
+    {
+      icon: "inventory_2", label: "Package",
+      value: `${packageType === "ONE_DAY" ? "1-Day" : "5-Day"} · ₹${perSession}/session × ${sessionCount}`,
+    },
+    ...(notes ? [{ icon: "notes", label: "Notes", value: notes }] : []),
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#0a4a45] via-[#0F766E] to-[#14B8A6] flex items-center justify-center p-5 relative overflow-hidden">
+      {/* Background glow orbs */}
+      <div className="absolute top-0 left-0 w-96 h-96 rounded-full bg-white/5 blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-black/10 blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
+
+      {/* Confetti origin (behind the check icon area) */}
+      <div className="absolute top-1/2 left-1/2 pointer-events-none" style={{ zIndex: 10 }}>
+        {CONFETTI_PIECES.map((p, i) => (
+          <ConfettiPiece key={i} {...p} />
+        ))}
+      </div>
+
+      {/* Receipt card */}
+      <div
+        className="relative z-10 w-full max-w-sm"
+        style={{
+          transition: "opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1)",
+          opacity: cardVisible ? 1 : 0,
+          transform: cardVisible ? "translateY(0)" : "translateY(48px)",
+        }}
+      >
+        {/* ── Top gradient header ── */}
+        <div className="bg-gradient-to-br from-[#0F766E] to-[#14B8A6] rounded-t-3xl px-6 pt-8 pb-12 text-center relative overflow-hidden">
+          {/* Subtle shimmer lines */}
+          <div className="absolute inset-0 opacity-10" style={{ background: "repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.3) 20px, rgba(255,255,255,0.3) 21px)" }} />
+
+          {/* Animated check circle */}
+          <div
+            className="w-20 h-20 rounded-full border-4 border-white/30 bg-white/15 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 relative z-10"
+            style={{
+              transition: "transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.4s ease",
+              transform: iconVisible ? "scale(1)" : "scale(0)",
+              opacity: iconVisible ? 1 : 0,
+            }}
+          >
+            <span className="material-symbols-outlined text-white text-4xl">check_circle</span>
+            {/* Pulse ring */}
+            <div
+              className="absolute inset-0 rounded-full border-2 border-white/40"
+              style={{
+                animation: iconVisible ? "ping 1.5s cubic-bezier(0,0,0.2,1) 0.5s 2" : "none",
+              }}
+            />
+          </div>
+
+          <h2 className="text-2xl font-bold text-white mb-1 relative z-10">Booking Confirmed!</h2>
+          <p className="text-white/70 text-sm relative z-10">முன்பதிவு உறுதிப்படுத்தப்பட்டது</p>
+
+          {/* Booking reference pill */}
+          <div className="mt-4 inline-flex items-center gap-2.5 bg-black/20 backdrop-blur-md rounded-full px-5 py-2 border border-white/15 relative z-10">
+            <span className="text-white/50 text-xs font-medium">REF</span>
+            <span className="text-white font-mono font-bold tracking-[0.2em] text-sm">{bookingId.slice(0, 8).toUpperCase()}</span>
+          </div>
+        </div>
+
+        {/* ── Ticket tear divider ── */}
+        <div className="relative bg-white" style={{ height: 0 }}>
+          {/* Left notch */}
+          <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-gradient-to-br from-[#0a4a45] to-[#0F766E] -translate-x-1/2 -translate-y-1/2" />
+          {/* Right notch */}
+          <div className="absolute right-0 top-0 w-6 h-6 rounded-full bg-gradient-to-br from-[#0F766E] to-[#14B8A6] translate-x-1/2 -translate-y-1/2" />
+          {/* Dashed line */}
+          <div className="absolute top-0 left-6 right-6 border-t-2 border-dashed border-gray-200" />
+        </div>
+
+        {/* ── Detail rows ── */}
+        <div className="bg-white px-6 pt-6 pb-2">
+          {rows.map((row, i) => (
+            <div key={row.label} className={`flex items-start gap-3 py-3 ${i < rows.length - 1 ? "border-b border-gray-100" : ""}`}>
+              <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="material-symbols-outlined text-[#0F766E] text-base">{row.icon}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{row.label}</p>
+                <p className="text-sm font-semibold text-gray-800 mt-0.5 leading-snug">{row.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Amount bar ── */}
+        <div className="bg-teal-50 border-t border-teal-100 px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-[#0F766E] uppercase tracking-wider">Total Payable</p>
+            <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+              <span className="material-symbols-outlined text-xs text-gray-400">payments</span>
+              Cash at clinic · நேரில் செலுத்தவும்
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-[#0F766E]">₹{price}</p>
+            {sessionCount > 1 && <p className="text-[10px] text-gray-400">₹{perSession} × {sessionCount} sessions</p>}
+          </div>
+        </div>
+
+        {/* ── Info notice ── */}
+        <div className="bg-amber-50 border-t border-amber-100 px-6 py-3 flex items-start gap-2.5">
+          <span className="material-symbols-outlined text-amber-500 text-base shrink-0 mt-0.5">info</span>
+          <p className="text-xs text-amber-700 leading-relaxed">
+            Our team will contact you on <span className="font-bold">+91 {phone}</span> to confirm your appointment. Please arrive 5 mins early.
+          </p>
+        </div>
+
+        {/* ── Actions ── */}
+        <div className="bg-white rounded-b-3xl px-6 pb-6 pt-4 space-y-3 border-t border-gray-100">
+          <button
+            onClick={() => window.location.reload()}
+            className="btn-primary w-full py-3"
+          >
+            <span className="material-symbols-outlined text-base">add_circle</span>
+            Book Another Session
+          </button>
+          <Link href="/" className="btn-secondary w-full py-3 justify-center flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">home</span>
+            Back to Home
+          </Link>
+        </div>
+      </div>
+
+      {/* Bottom SKCT branding */}
+      <p className="absolute bottom-4 left-0 right-0 text-center text-white/30 text-xs z-10">
+        Sri Kambathukarar Physiotherapy &amp; Rehabilitation Center
+      </p>
+    </div>
+  );
+}
+
+// ── Main Booking Page ───────────────────────────────────────────────────────
 export default function BookingPage() {
   const [step, setStep] = useState<Step>("identity");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState<Address>({ door: "", area: "", city: "", pincode: "" });
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [packageType, setPackageType] = useState<PackageType>("ONE_DAY");
@@ -74,10 +313,26 @@ export default function BookingPage() {
     if (!selectedDoctor || !selectedDate || !selectedSlot) return;
     setError("");
     setLoading(true);
+
+    // Build notes — prepend home address when HOME visit
+    const addressLines = visitType === "HOME"
+      ? `[HOME ADDRESS]\nDoor/Street: ${address.door}\nArea/Landmark: ${address.area || "—"}\nCity: ${address.city} — ${address.pincode}`
+      : "";
+    const fullNotes = [addressLines, notes].filter(Boolean).join("\n\n");
+
     const res = await fetch("/api/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone, doctor_id: selectedDoctor.id, package_type: packageType, visit_type: visitType, start_date: selectedDate, scheduled_time: selectedSlot, notes }),
+      body: JSON.stringify({
+        name,
+        phone,
+        doctor_id: selectedDoctor.id,
+        package_type: packageType,
+        visit_type: visitType,
+        start_date: selectedDate,
+        scheduled_time: selectedSlot,
+        notes: fullNotes || undefined,
+      }),
     });
     const data = await res.json();
     setLoading(false);
@@ -99,40 +354,36 @@ export default function BookingPage() {
     else if (step === "confirm") confirmBooking();
   };
 
+  const addressIncomplete = visitType === "HOME" && (!address.door.trim() || !address.city.trim() || address.pincode.length < 6);
+
   const isNextDisabled =
     (step === "identity" && (name.trim().length < 2 || phone.length < 10)) ||
     (step === "doctor" && !selectedDoctor) ||
+    (step === "package" && addressIncomplete) ||
     (step === "datetime" && (!selectedDate || !selectedSlot)) ||
     loading;
 
-  // Pricing: CENTER ₹100/session, HOME ₹500/session
   const perSession = visitType === "HOME" ? 500 : 100;
   const sessionCount = packageType === "ONE_DAY" ? 1 : 5;
   const price = perSession * sessionCount;
 
-  if (step === "success") {
+  if (step === "success" && selectedDoctor) {
     return (
-      <div className="min-h-screen bg-background-soft flex items-center justify-center p-5">
-        <div className="card p-10 text-center max-w-md w-full">
-          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5">
-            <span className="material-symbols-outlined text-green-600 text-4xl">check_circle</span>
-          </div>
-          <h2 className="text-2xl font-bold text-text-dark mb-1">Booking Confirmed!</h2>
-          <p className="text-text-muted text-sm mb-1">முன்பதிவு உறுதிப்படுத்தப்பட்டது</p>
-          <p className="text-xs text-text-muted font-mono bg-background-soft rounded-lg px-3 py-1.5 inline-block mt-2 mb-6">
-            ID: {bookingId.slice(0, 8).toUpperCase()}
-          </p>
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700 font-medium mb-6 text-left space-y-1.5">
-            <p className="flex items-center gap-2"><span className="material-symbols-outlined text-base">person</span>{name}</p>
-            <p className="flex items-center gap-2"><span className="material-symbols-outlined text-base">stethoscope</span>Dr. {selectedDoctor?.users.name}</p>
-            <p className="flex items-center gap-2"><span className="material-symbols-outlined text-base">calendar_today</span>{selectedDate} at {selectedSlot}</p>
-            <p className="flex items-center gap-2"><span className="material-symbols-outlined text-base">payments</span>₹{price} — payable at the clinic</p>
-          </div>
-          <Link href="/" className="btn-primary w-full py-3 justify-center">
-            <span className="material-symbols-outlined text-base">home</span>Back to Home
-          </Link>
-        </div>
-      </div>
+      <SuccessPage
+        bookingId={bookingId}
+        name={name}
+        phone={phone}
+        selectedDoctor={selectedDoctor}
+        selectedDate={selectedDate}
+        selectedSlot={selectedSlot}
+        packageType={packageType}
+        visitType={visitType}
+        price={price}
+        sessionCount={sessionCount}
+        perSession={perSession}
+        address={address}
+        notes={notes}
+      />
     );
   }
 
@@ -255,6 +506,7 @@ export default function BookingPage() {
             {/* Step: Package & Visit */}
             {step === "package" && (
               <div className="space-y-4">
+                {/* Visit type */}
                 <div className="card p-6">
                   <h2 className="font-bold text-text-dark mb-0.5 text-lg">Visit Type</h2>
                   <p className="text-xs text-text-muted mb-5">பார்வையின் வகையைத் தேர்ந்தெடுக்கவும்</p>
@@ -275,7 +527,68 @@ export default function BookingPage() {
                       </button>
                     ))}
                   </div>
+
+                  {/* Home address fields — revealed when HOME selected */}
+                  {visitType === "HOME" && (
+                    <div className="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+                      <p className="text-xs font-bold text-amber-800 uppercase tracking-wide flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm">location_on</span>
+                        Your Home Address · வீட்டு முகவரி
+                      </p>
+                      <div>
+                        <label className="block text-xs font-semibold text-amber-800 mb-1 opacity-80">Door No / Street <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          value={address.door}
+                          onChange={(e) => setAddress((a) => ({ ...a, door: e.target.value }))}
+                          className="input text-sm"
+                          placeholder="e.g. 12/A, Gandhi Nagar Street"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-amber-800 mb-1 opacity-80">Area / Landmark</label>
+                        <input
+                          type="text"
+                          value={address.area}
+                          onChange={(e) => setAddress((a) => ({ ...a, area: e.target.value }))}
+                          className="input text-sm"
+                          placeholder="e.g. Near Panchayat Office"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-amber-800 mb-1 opacity-80">City <span className="text-red-500">*</span></label>
+                          <input
+                            type="text"
+                            value={address.city}
+                            onChange={(e) => setAddress((a) => ({ ...a, city: e.target.value }))}
+                            className="input text-sm"
+                            placeholder="e.g. Komarapalayam"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-amber-800 mb-1 opacity-80">Pincode <span className="text-red-500">*</span></label>
+                          <input
+                            type="tel"
+                            value={address.pincode}
+                            onChange={(e) => setAddress((a) => ({ ...a, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) }))}
+                            className="input text-sm"
+                            placeholder="638183"
+                            maxLength={6}
+                          />
+                        </div>
+                      </div>
+                      {addressIncomplete && (
+                        <p className="text-xs text-amber-700 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">warning</span>
+                          Door/Street, City &amp; Pincode required for home visits
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Package selection */}
                 <div className="card p-6">
                   <h2 className="font-bold text-text-dark mb-0.5 text-lg">Select Package</h2>
                   <p className="text-xs text-text-muted mb-5">தொகுப்பைத் தேர்ந்தெடுக்கவும்</p>
@@ -314,7 +627,7 @@ export default function BookingPage() {
                   <p className="text-xs text-text-muted mb-4">தேதி தேர்வு · Mon–Sat (Sunday closed)</p>
                   <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                     {availableDates.map((d) => {
-                      const date = new Date(d);
+                      const date = new Date(d + "T00:00:00");
                       const isSelected = d === selectedDate;
                       return (
                         <button key={d} type="button" onClick={() => { setSelectedDate(d); setSelectedSlot(""); }}
@@ -369,7 +682,12 @@ export default function BookingPage() {
                     { icon: "stethoscope", label: "Doctor", value: `Dr. ${selectedDoctor.users.name} · ${selectedDoctor.specialization}` },
                     { icon: "inventory_2", label: "Package", value: `${packageType === "ONE_DAY" ? "1-Day" : "5-Day"} Package — ₹${perSession} × ${sessionCount} = ₹${price}` },
                     { icon: visitType === "CENTER" ? "business" : "home", label: "Visit Type", value: visitType === "CENTER" ? "Center Visit" : "Home Visit" },
-                    { icon: "calendar_today", label: "Start Date", value: new Date(selectedDate).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" }) },
+                    ...(visitType === "HOME" && address.door ? [{
+                      icon: "location_on",
+                      label: "Address",
+                      value: [address.door, address.area, address.city, address.pincode].filter(Boolean).join(", "),
+                    }] : []),
+                    { icon: "calendar_today", label: "Start Date", value: new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" }) },
                     { icon: "schedule", label: "Time", value: selectedSlot },
                     ...(notes ? [{ icon: "notes", label: "Notes", value: notes }] : []),
                   ].map((row) => (
@@ -428,7 +746,8 @@ export default function BookingPage() {
                   { icon: "stethoscope", label: "Doctor", value: selectedDoctor ? `Dr. ${selectedDoctor.users.name}` : "Not selected" },
                   { icon: "inventory_2", label: "Package", value: `${packageType === "ONE_DAY" ? "1-Day" : "5-Day"} · ₹${price}` },
                   { icon: visitType === "CENTER" ? "business" : "home", label: "Visit", value: visitType === "CENTER" ? "Center Visit" : "Home Visit" },
-                  ...(selectedDate ? [{ icon: "calendar_today", label: "Date", value: new Date(selectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) }] : []),
+                  ...(visitType === "HOME" && address.city ? [{ icon: "location_on", label: "City", value: address.city }] : []),
+                  ...(selectedDate ? [{ icon: "calendar_today", label: "Date", value: new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" }) }] : []),
                   ...(selectedSlot ? [{ icon: "schedule", label: "Time", value: selectedSlot }] : []),
                 ].map((row) => (
                   <div key={row.label} className="flex items-center gap-3 p-3 rounded-lg bg-background-soft">

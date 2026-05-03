@@ -29,6 +29,7 @@ export const createBookingSchema = z.object({
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
   scheduled_time: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM'),
   notes: z.string().optional(),
+  address: z.string().optional(),
 });
 
 export const checkinSchema = z.object({
