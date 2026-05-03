@@ -145,32 +145,28 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-5">
+                <div className="space-y-2.5 mb-5">
+                  <div className="grid grid-cols-3 gap-2 text-[10px] font-bold uppercase tracking-wide text-text-muted px-1">
+                    <span>Package</span>
+                    <span className="text-center">Center</span>
+                    <span className="text-right">Home</span>
+                  </div>
                   {[
-                    { icon: "calendar_today", label: "1-Day Session", price: "₹100", desc: "Single physiotherapy session" },
-                    { icon: "date_range", label: "5-Day Package", price: "₹300", desc: "5 consecutive sessions" },
+                    { icon: "calendar_today", label: "1-Day", center: 100, home: 500 },
+                    { icon: "date_range", label: "5-Day", center: 500, home: 2500 },
                   ].map((pkg) => (
-                    <div key={pkg.label} className="flex items-center gap-3 p-3.5 bg-background-soft rounded-xl">
-                      <span className="material-symbols-outlined text-primary text-xl">{pkg.icon}</span>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-text-dark">{pkg.label}</p>
-                        <p className="text-xs text-text-muted">{pkg.desc}</p>
+                    <div key={pkg.label} className="grid grid-cols-3 gap-2 items-center p-3 bg-background-soft rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-lg">{pkg.icon}</span>
+                        <span className="text-sm font-bold text-text-dark">{pkg.label}</span>
                       </div>
-                      <p className="text-lg font-bold text-primary">{pkg.price}</p>
+                      <p className="text-base font-bold text-primary text-center">₹{pkg.center}</p>
+                      <p className="text-base font-bold text-accent-warm text-right">₹{pkg.home}</p>
                     </div>
                   ))}
-                </div>
-
-                <div className="flex gap-2 mb-5">
-                  {[
-                    { label: "Center Visit", icon: "business" },
-                    { label: "Home Visit", icon: "home" },
-                  ].map((v) => (
-                    <div key={v.label} className="flex items-center gap-1.5 text-xs font-semibold text-text-muted bg-background-soft px-3 py-1.5 rounded-full">
-                      <span className="material-symbols-outlined text-sm text-primary">{v.icon}</span>
-                      {v.label}
-                    </div>
-                  ))}
+                  <p className="text-[11px] text-text-muted text-center pt-1">
+                    Center ₹100/session · Home ₹500/session
+                  </p>
                 </div>
 
                 {/* Hours */}

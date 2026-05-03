@@ -105,7 +105,10 @@ export default function BookingPage() {
     (step === "datetime" && (!selectedDate || !selectedSlot)) ||
     loading;
 
-  const price = packageType === "ONE_DAY" ? 100 : 300;
+  // Pricing: CENTER ₹100/session, HOME ₹500/session
+  const perSession = visitType === "HOME" ? 500 : 100;
+  const sessionCount = packageType === "ONE_DAY" ? 1 : 5;
+  const price = perSession * sessionCount;
 
   if (step === "success") {
     return (
@@ -253,41 +256,51 @@ export default function BookingPage() {
             {step === "package" && (
               <div className="space-y-4">
                 <div className="card p-6">
-                  <h2 className="font-bold text-text-dark mb-0.5 text-lg">Select Package</h2>
-                  <p className="text-xs text-text-muted mb-5">தொகுப்பைத் தேர்ந்தெடுக்கவும்</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <h2 className="font-bold text-text-dark mb-0.5 text-lg">Visit Type</h2>
+                  <p className="text-xs text-text-muted mb-5">பார்வையின் வகையைத் தேர்ந்தெடுக்கவும்</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
-                      { type: "ONE_DAY" as PackageType, label: "1-Day Package", price: "₹100", desc: "Single physiotherapy session", icon: "calendar_today" },
-                      { type: "FIVE_DAY" as PackageType, label: "5-Day Package", price: "₹300", desc: "Mon–Fri, 5 consecutive sessions", icon: "date_range" },
-                    ].map((pkg) => (
-                      <button key={pkg.type} type="button" onClick={() => setPackageType(pkg.type)}
-                        className={`text-left rounded-xl border-2 p-5 transition-all ${packageType === pkg.type ? "border-primary bg-primary/5" : "border-border-grey hover:border-primary/40 bg-white"}`}
+                      { type: "CENTER" as VisitType, label: "Center Visit", labelTa: "மையத்தில்", desc: "Visit our Komarapalayam clinic", per: 100, icon: "business" },
+                      { type: "HOME" as VisitType, label: "Home Visit", labelTa: "வீட்டிற்கு", desc: "Therapist visits your home", per: 500, icon: "home" },
+                    ].map((v) => (
+                      <button key={v.type} type="button" onClick={() => setVisitType(v.type)}
+                        className={`text-left rounded-xl border-2 p-4 transition-all ${visitType === v.type ? "border-primary bg-primary/5" : "border-border-grey hover:border-primary/40 bg-white"}`}
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <span className={`material-symbols-outlined text-2xl ${packageType === pkg.type ? "text-primary" : "text-text-muted"}`}>{pkg.icon}</span>
-                          <span className={`text-2xl font-bold ${packageType === pkg.type ? "text-primary" : "text-text-dark"}`}>{pkg.price}</span>
+                        <div className="flex items-start justify-between mb-2">
+                          <span className={`material-symbols-outlined text-2xl ${visitType === v.type ? "text-primary" : "text-text-muted"}`}>{v.icon}</span>
+                          <span className={`text-sm font-bold ${visitType === v.type ? "text-primary" : "text-text-muted"}`}>₹{v.per}/session</span>
                         </div>
-                        <p className="font-bold text-text-dark">{pkg.label}</p>
-                        <p className="text-xs text-text-muted mt-0.5">{pkg.desc}</p>
+                        <p className="font-bold text-sm text-text-dark">{v.label}</p>
+                        <p className="text-[11px] text-text-muted mt-0.5">{v.labelTa} · {v.desc}</p>
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="card p-6">
-                  <h2 className="font-bold text-text-dark mb-4">Visit Type</h2>
-                  <div className="grid grid-cols-2 gap-3">
+                  <h2 className="font-bold text-text-dark mb-0.5 text-lg">Select Package</h2>
+                  <p className="text-xs text-text-muted mb-5">தொகுப்பைத் தேர்ந்தெடுக்கவும்</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
-                      { type: "CENTER" as VisitType, label: "Center Visit", desc: "Visit our clinic", icon: "business" },
-                      { type: "HOME" as VisitType, label: "Home Visit", desc: "Doctor comes to you", icon: "home" },
-                    ].map((v) => (
-                      <button key={v.type} type="button" onClick={() => setVisitType(v.type)}
-                        className={`text-left rounded-xl border-2 p-4 transition-all ${visitType === v.type ? "border-primary bg-primary/5" : "border-border-grey hover:border-primary/40 bg-white"}`}
-                      >
-                        <span className={`material-symbols-outlined text-2xl block mb-2 ${visitType === v.type ? "text-primary" : "text-text-muted"}`}>{v.icon}</span>
-                        <p className="font-bold text-sm text-text-dark">{v.label}</p>
-                        <p className="text-xs text-text-muted mt-0.5">{v.desc}</p>
-                      </button>
-                    ))}
+                      { type: "ONE_DAY" as PackageType, label: "1-Day Package", labelTa: "ஒரு நாள்", count: 1, desc: "Single session", icon: "calendar_today" },
+                      { type: "FIVE_DAY" as PackageType, label: "5-Day Package", labelTa: "ஐந்து நாட்கள்", count: 5, desc: "5 consecutive sessions (Mon–Sat)", icon: "date_range" },
+                    ].map((pkg) => {
+                      const total = perSession * pkg.count;
+                      return (
+                        <button key={pkg.type} type="button" onClick={() => setPackageType(pkg.type)}
+                          className={`text-left rounded-xl border-2 p-5 transition-all ${packageType === pkg.type ? "border-primary bg-primary/5" : "border-border-grey hover:border-primary/40 bg-white"}`}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <span className={`material-symbols-outlined text-2xl ${packageType === pkg.type ? "text-primary" : "text-text-muted"}`}>{pkg.icon}</span>
+                            <div className="text-right">
+                              <span className={`text-2xl font-bold ${packageType === pkg.type ? "text-primary" : "text-text-dark"}`}>₹{total}</span>
+                              {pkg.count > 1 && <p className="text-[10px] text-text-muted">₹{perSession} × {pkg.count}</p>}
+                            </div>
+                          </div>
+                          <p className="font-bold text-text-dark">{pkg.label}</p>
+                          <p className="text-xs text-text-muted mt-0.5">{pkg.labelTa} · {pkg.desc}</p>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -354,7 +367,7 @@ export default function BookingPage() {
                   {[
                     { icon: "person", label: "Patient", value: `${name} · +91 ${phone}` },
                     { icon: "stethoscope", label: "Doctor", value: `Dr. ${selectedDoctor.users.name} · ${selectedDoctor.specialization}` },
-                    { icon: "inventory_2", label: "Package", value: packageType === "ONE_DAY" ? "1-Day Package — ₹100" : "5-Day Package — ₹300" },
+                    { icon: "inventory_2", label: "Package", value: `${packageType === "ONE_DAY" ? "1-Day" : "5-Day"} Package — ₹${perSession} × ${sessionCount} = ₹${price}` },
                     { icon: visitType === "CENTER" ? "business" : "home", label: "Visit Type", value: visitType === "CENTER" ? "Center Visit" : "Home Visit" },
                     { icon: "calendar_today", label: "Start Date", value: new Date(selectedDate).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" }) },
                     { icon: "schedule", label: "Time", value: selectedSlot },
@@ -413,7 +426,7 @@ export default function BookingPage() {
                 {[
                   { icon: "person", label: "Patient", value: name || "—" },
                   { icon: "stethoscope", label: "Doctor", value: selectedDoctor ? `Dr. ${selectedDoctor.users.name}` : "Not selected" },
-                  { icon: "inventory_2", label: "Package", value: packageType === "ONE_DAY" ? "1-Day · ₹100" : "5-Day · ₹300" },
+                  { icon: "inventory_2", label: "Package", value: `${packageType === "ONE_DAY" ? "1-Day" : "5-Day"} · ₹${price}` },
                   { icon: visitType === "CENTER" ? "business" : "home", label: "Visit", value: visitType === "CENTER" ? "Center Visit" : "Home Visit" },
                   ...(selectedDate ? [{ icon: "calendar_today", label: "Date", value: new Date(selectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) }] : []),
                   ...(selectedSlot ? [{ icon: "schedule", label: "Time", value: selectedSlot }] : []),
