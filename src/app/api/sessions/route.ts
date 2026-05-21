@@ -8,13 +8,36 @@ export async function GET(req: NextRequest) {
   if (result instanceof Response) return result;
   const user = result as AuthPayload;
 
-  const date = req.nextUrl.searchParams.get('date');
+  const date       = req.nextUrl.searchParams.get('date');
+  const from       = req.nextUrl.searchParams.get('from');
+  const to         = req.nextUrl.searchParams.get('to');
+  const datesOnly  = req.nextUrl.searchParams.get('dates_only') === '1';
+
+  // Lightweight mode: just return dates that have sessions (for calendar dots)
+  if (datesOnly && from && to) {
+    let dq = supabaseAdmin
+      .from('sessions')
+      .select('scheduled_date')
+      .gte('scheduled_date', from)
+      .lte('scheduled_date', to)
+      .neq('session_status', 'CANCELLED');
+
+    if (user.role === 'DOCTOR') {
+      const { data: doc } = await supabaseAdmin
+        .from('doctors').select('id').eq('user_id', user.userId).single();
+      if (doc) dq = dq.eq('doctor_id', doc.id);
+    }
+
+    const { data: rows } = await dq;
+    const dates = [...new Set((rows ?? []).map((r: any) => r.scheduled_date as string))];
+    return ok({ dates });
+  }
 
   let query = supabaseAdmin
     .from('sessions')
     .select(`
       id, scheduled_date, scheduled_time, session_number, session_status, notes,
-      bookings!inner(id, package_type, visit_type),
+      bookings!inner(id, package_type, visit_type, notes, amount),
       users!sessions_patient_id_fkey(id, name, phone),
       attendance(id, status, marked_at),
       photos(id, file_url)
@@ -23,6 +46,8 @@ export async function GET(req: NextRequest) {
     .order('scheduled_time', { ascending: true });
 
   if (date) query = query.eq('scheduled_date', date);
+  if (from)  query = query.gte('scheduled_date', from);
+  if (to)    query = query.lte('scheduled_date', to);
 
   if (user.role === 'DOCTOR') {
     const { data: doctor } = await supabaseAdmin
@@ -59,6 +84,8 @@ export async function GET(req: NextRequest) {
         id: s.bookings?.id,
         package_type: s.bookings?.package_type,
         visit_type: s.bookings?.visit_type,
+        notes: s.bookings?.notes ?? null,
+        amount: s.bookings?.amount ?? 0,
         scheduled_time: trimTime(s.scheduled_time),
         patients: {
           id: patientUser.id ?? '',

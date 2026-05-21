@@ -1,7 +1,8 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, after } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { ok, err, requireAuth } from '@/lib/api-helpers';
 import { createBookingSchema } from '@/lib/validators';
+import { sendPushToUsers } from '@/lib/push';
 import type { AuthPayload } from '@/types';
 
 export async function GET(req: NextRequest) {
@@ -112,6 +113,38 @@ export async function POST(req: NextRequest) {
 
   const { error: sessionsError } = await supabaseAdmin.from('sessions').insert(sessionRows);
   if (sessionsError) console.error('SESSIONS INSERT ERROR:', JSON.stringify(sessionsError));
+
+  // Push notification — non-blocking, fires after response sent
+  after(async () => {
+    try {
+      const dateStr = new Date(start_date + 'T00:00:00').toLocaleDateString('en-IN', {
+        weekday: 'short', day: 'numeric', month: 'short',
+      });
+      const payload = {
+        title: `New Booking — ${name}`,
+        body: `${dateStr} at ${scheduled_time} · ${visit_type === 'HOME' ? 'Home Visit' : 'Center Visit'} · ₹${amount}`,
+        url: '/doctor/schedule',
+        tag: `booking-${booking.id}`,
+      };
+
+      // Doctor's user_id
+      const { data: doc } = await supabaseAdmin
+        .from('doctors').select('user_id').eq('id', doctor_id).single();
+
+      // All super admins
+      const { data: admins } = await supabaseAdmin
+        .from('users').select('id').eq('role', 'SUPER_ADMIN');
+
+      const recipientIds = [
+        ...(doc?.user_id ? [doc.user_id] : []),
+        ...(admins ?? []).map((a: any) => a.id),
+      ];
+
+      if (recipientIds.length) await sendPushToUsers(recipientIds, payload);
+    } catch (e) {
+      console.error('Push notification failed:', e);
+    }
+  });
 
   return ok({ ...booking, patient_name: name, patient_phone: phone }, 201);
 }

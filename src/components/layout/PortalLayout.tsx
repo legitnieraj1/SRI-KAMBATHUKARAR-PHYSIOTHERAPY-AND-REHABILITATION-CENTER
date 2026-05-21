@@ -1,6 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr.buffer as ArrayBuffer;
+}
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -52,6 +61,42 @@ export default function PortalLayout({ children, role, userName }: PortalLayoutP
 
   // Close sidebar on route change (mobile)
   useEffect(() => { setSidebarOpen(false); }, [pathname]);
+
+  // Web Push — register SW and subscribe (doctor + admin only)
+  useEffect(() => {
+    if (role === "patient") return;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+    const subscribe = async () => {
+      try {
+        const reg = await navigator.serviceWorker.register("/sw.js");
+        await navigator.serviceWorker.ready;
+
+        const existing = await reg.pushManager.getSubscription();
+        const sub = existing ?? await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(
+            process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+          ),
+        });
+
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sub.toJSON()),
+        });
+      } catch {
+        // Notification permission denied or VAPID not set — ignore silently
+      }
+    };
+
+    if (Notification.permission === "granted") {
+      subscribe();
+    } else if (Notification.permission === "default") {
+      Notification.requestPermission().then((p) => { if (p === "granted") subscribe(); });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
 
   return (
     <div className="min-h-screen bg-background-soft flex">
