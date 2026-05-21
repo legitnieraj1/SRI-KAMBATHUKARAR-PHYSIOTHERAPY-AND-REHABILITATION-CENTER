@@ -67,6 +67,25 @@ export default function AdminReportsPage() {
 
   const fmt = (n: number) => `₹${(n ?? 0).toLocaleString("en-IN")}`;
 
+  const downloadCSV = (r: Report) => {
+    const lines = [
+      ["Month", r.month],
+      ["Total Revenue", r.total_revenue],
+      ["Doctor Payout (60%)", r.total_doctor_payout],
+      ["Admin Earnings (40%)", r.total_admin_earnings],
+      ["Status", r.status],
+      [],
+      ["Doctor", "Sessions", "Earnings"],
+      ...(r.doctor_breakdown ?? []).map((d) => [d.name, d.sessions, d.total]),
+    ];
+    const csv = lines.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `report-${r.month}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <PortalLayout role="admin" userName={adminName}>
       <div className="flex items-center justify-between mb-6">
@@ -186,16 +205,25 @@ export default function AdminReportsPage() {
                     </div>
                   )}
 
-                  {r.status === "GENERATED" && (
+                  <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() => lock(r.id)}
-                      disabled={locking === r.id}
-                      className="flex items-center gap-2 text-sm font-bold text-red-600 border-2 border-red-300 rounded-xl px-4 py-2.5 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      onClick={() => downloadCSV(r)}
+                      className="flex items-center gap-2 text-sm font-bold text-primary border-2 border-primary/30 rounded-xl px-4 py-2.5 hover:bg-primary/5 transition-colors"
                     >
-                      <span className="material-symbols-outlined text-base">lock</span>
-                      {locking === r.id ? "Locking..." : "Lock Report — No changes after this"}
+                      <span className="material-symbols-outlined text-base">download</span>
+                      Download CSV
                     </button>
-                  )}
+                    {r.status === "GENERATED" && (
+                      <button
+                        onClick={() => lock(r.id)}
+                        disabled={locking === r.id}
+                        className="flex items-center gap-2 text-sm font-bold text-red-600 border-2 border-red-300 rounded-xl px-4 py-2.5 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-base">lock</span>
+                        {locking === r.id ? "Locking..." : "Lock Report — No changes after this"}
+                      </button>
+                    )}
+                  </div>
                   {r.status === "LOCKED" && (
                     <div className="flex items-center gap-2 text-sm text-red-600 font-medium">
                       <span className="material-symbols-outlined text-base">lock</span>

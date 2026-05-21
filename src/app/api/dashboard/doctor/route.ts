@@ -29,7 +29,7 @@ export async function GET() {
       .order('scheduled_time', { ascending: true }),
     supabaseAdmin
       .from('doctor_earnings')
-      .select('commission, sessions_count, total_revenue')
+      .select('commission, sessions_count, total_revenue, monthly_reports(month)')
       .eq('doctor_id', doctor.id),
   ]);
 
@@ -46,7 +46,17 @@ export async function GET() {
     photos: s.photos ?? [],
   }));
 
-  const totalCommission = (earningsRes.data ?? []).reduce((s, e) => s + (e.commission ?? 0), 0);
+  const earningsData = earningsRes.data ?? [];
+  const totalCommission = earningsData.reduce((s, e) => s + (e.commission ?? 0), 0);
+  const totalRevenue    = earningsData.reduce((s, e) => s + (e.total_revenue ?? 0), 0);
+  const totalSessions   = earningsData.reduce((s, e) => s + (e.sessions_count ?? 0), 0);
+
+  const monthly = earningsData.map((e: any) => ({
+    month: e.monthly_reports?.month?.slice(0, 7) ?? '',
+    sessions_count: e.sessions_count ?? 0,
+    total_revenue: e.total_revenue ?? 0,
+    doctor_share: e.commission ?? 0,
+  })).filter((e: any) => e.month);
 
   return ok({
     today: {
@@ -57,6 +67,9 @@ export async function GET() {
     },
     earnings: {
       total_commission: totalCommission,
+      total_revenue: totalRevenue,
+      total_sessions: totalSessions,
+      monthly,
     },
   });
 }

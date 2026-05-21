@@ -40,13 +40,13 @@ export async function POST(req: NextRequest) {
 
   // Find or create user by phone — patient_id in bookings/sessions is users.id
   let { data: user } = await supabaseAdmin
-    .from('users').select('id, role').eq('phone', phone).single();
+    .from('users').select('id, role, ref_number').eq('phone', phone).single();
 
   if (!user) {
     const { data: newUser, error: userErr } = await supabaseAdmin
       .from('users')
       .insert({ phone, name, role: 'PATIENT' })
-      .select('id, role')
+      .select('id, role, ref_number')
       .single();
     if (userErr || !newUser) {
       console.error('USER INSERT ERROR:', JSON.stringify(userErr));
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
     }
   });
 
-  return ok({ ...booking, patient_name: name, patient_phone: phone }, 201);
+  return ok({ ...booking, patient_name: name, patient_phone: phone, ref_number: user.ref_number ?? null }, 201);
 }
 
 // SKCT operates Mon–Sat; generate session dates excluding Sunday only

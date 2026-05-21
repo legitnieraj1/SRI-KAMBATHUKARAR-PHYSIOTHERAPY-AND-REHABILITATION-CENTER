@@ -86,6 +86,7 @@ function ConfettiPiece({ color, x, y, r, size, delay }: typeof CONFETTI_PIECES[0
 // ── Premium Success Page ────────────────────────────────────────────────────
 function SuccessPage({
   bookingId,
+  refNumber,
   name,
   phone,
   selectedDoctor,
@@ -100,6 +101,7 @@ function SuccessPage({
   notes,
 }: {
   bookingId: string;
+  refNumber: string;
   name: string;
   phone: string;
   selectedDoctor: Doctor;
@@ -192,10 +194,18 @@ function SuccessPage({
           <h2 className="text-2xl font-bold text-white mb-1 relative z-10">Booking Confirmed!</h2>
           <p className="text-white/70 text-sm relative z-10">முன்பதிவு உறுதிப்படுத்தப்பட்டது</p>
 
-          {/* Booking reference pill */}
-          <div className="mt-4 inline-flex items-center gap-2.5 bg-black/20 backdrop-blur-md rounded-full px-5 py-2 border border-white/15 relative z-10">
-            <span className="text-white/50 text-xs font-medium">REF</span>
-            <span className="text-white font-mono font-bold tracking-[0.2em] text-sm">{bookingId.slice(0, 8).toUpperCase()}</span>
+          {/* Patient ref number + booking ref */}
+          <div className="mt-4 flex flex-col items-center gap-2 relative z-10">
+            {refNumber && (
+              <div className="inline-flex items-center gap-2.5 bg-white/20 backdrop-blur-md rounded-full px-5 py-2 border border-white/30">
+                <span className="text-white/60 text-xs font-medium">PATIENT ID</span>
+                <span className="text-white font-mono font-bold tracking-[0.2em] text-base">{refNumber}</span>
+              </div>
+            )}
+            <div className="inline-flex items-center gap-2.5 bg-black/20 backdrop-blur-md rounded-full px-5 py-2 border border-white/15">
+              <span className="text-white/50 text-xs font-medium">BOOKING</span>
+              <span className="text-white font-mono font-bold tracking-[0.2em] text-sm">{bookingId.slice(0, 8).toUpperCase()}</span>
+            </div>
           </div>
         </div>
 
@@ -292,6 +302,7 @@ export default function BookingPage() {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [error, setError] = useState("");
   const [bookingId, setBookingId] = useState("");
+  const [refNumber, setRefNumber] = useState("");
 
   useEffect(() => {
     setDoctorsLoading(true);
@@ -342,6 +353,7 @@ export default function BookingPage() {
     setLoading(false);
     if (!res.ok) { setError(data.error ?? "Booking failed. Please try again."); return; }
     setBookingId(data.data.id);
+    setRefNumber(data.data.ref_number ?? "");
     setStep("success");
   };
 
@@ -375,6 +387,7 @@ export default function BookingPage() {
     return (
       <SuccessPage
         bookingId={bookingId}
+        refNumber={refNumber}
         name={name}
         phone={phone}
         selectedDoctor={selectedDoctor}

@@ -16,6 +16,7 @@ export interface User {
   email?: string;
   profile_image?: string;
   language_preference: string;
+  ref_number?: string;
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +57,9 @@ export interface Booking {
   payment?: Payment;
 }
 
+export type SessionPaymentStatus = 'PENDING' | 'RECEIVED';
+export type SessionPaymentMethod = 'CASH' | 'GPAY';
+
 export interface Session {
   id: string;
   booking_id: string;
@@ -65,6 +69,9 @@ export interface Session {
   scheduled_time: string;
   actual_checkin_time?: string;
   session_status: SessionStatus;
+  payment_method?: SessionPaymentMethod;
+  payment_status?: SessionPaymentStatus;
+  payment_received_at?: string;
   notes?: string;
   session_number: number;
   created_at: string;

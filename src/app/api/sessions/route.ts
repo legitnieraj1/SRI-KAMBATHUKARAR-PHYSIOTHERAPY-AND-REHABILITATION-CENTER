@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
     .from('sessions')
     .select(`
       id, scheduled_date, scheduled_time, session_number, session_status, notes,
-      bookings!inner(id, package_type, visit_type, notes, amount),
+      payment_method, payment_status, payment_received_at,
+      bookings!inner(id, package_type, visit_type, notes, amount, sessions_count),
       users!sessions_patient_id_fkey(id, name, phone),
       attendance(id, status, marked_at),
       photos(id, file_url)
@@ -80,12 +81,16 @@ export async function GET(req: NextRequest) {
       session_number: s.session_number,
       status: s.session_status,
       notes: s.notes,
+      payment_method: s.payment_method ?? null,
+      payment_status: s.payment_status ?? 'PENDING',
+      payment_received_at: s.payment_received_at ?? null,
       bookings: {
         id: s.bookings?.id,
         package_type: s.bookings?.package_type,
         visit_type: s.bookings?.visit_type,
         notes: s.bookings?.notes ?? null,
         amount: s.bookings?.amount ?? 0,
+        sessions_count: s.bookings?.sessions_count ?? 1,
         scheduled_time: trimTime(s.scheduled_time),
         patients: {
           id: patientUser.id ?? '',

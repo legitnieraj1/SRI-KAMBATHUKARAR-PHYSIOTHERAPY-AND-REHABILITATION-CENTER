@@ -30,10 +30,14 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   admin: [
     { href: "/admin/dashboard", icon: "dashboard", label: "Dashboard", labelTa: "டாஷ்போர்டு" },
     { href: "/admin/doctors", icon: "stethoscope", label: "Doctors", labelTa: "மருத்துவர்கள்" },
+    { href: "/admin/patients", icon: "group", label: "Patients", labelTa: "நோயாளிகள்" },
     { href: "/admin/reports", icon: "bar_chart_4_bars", label: "Reports", labelTa: "அறிக்கைகள்" },
+    { href: "/admin/payroll", icon: "account_balance_wallet", label: "Payroll", labelTa: "சம்பளம்" },
+    { href: "/admin/settings", icon: "settings", label: "Settings", labelTa: "அமைப்புகள்" },
   ],
   doctor: [
     { href: "/doctor/schedule", icon: "calendar_month", label: "Schedule", labelTa: "அட்டவணை" },
+    { href: "/doctor/earnings", icon: "payments", label: "Earnings", labelTa: "வருவாய்" },
   ],
   patient: [
     { href: "/patient/dashboard", icon: "home", label: "Home", labelTa: "முகப்பு" },

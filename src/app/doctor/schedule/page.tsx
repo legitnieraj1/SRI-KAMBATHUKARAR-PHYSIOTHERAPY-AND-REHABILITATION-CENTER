@@ -9,6 +9,8 @@ interface SessionData {
   session_date: string;
   session_number: number;
   status: string;
+  payment_method: string | null;
+  payment_status: string;
   bookings: {
     id: string;
     package_type: string;
@@ -16,6 +18,7 @@ interface SessionData {
     scheduled_time: string;
     notes: string | null;
     amount: number;
+    sessions_count: number;
     patients: { id: string; users: { name: string; phone: string } };
   };
   attendance: Array<{ attendance_status: string }>;
@@ -38,10 +41,10 @@ function parseNotes(raw: string | null): { address: string | null; extra: string
   return { address, extra };
 }
 
-function SessionCard({ s, onCheckin, onComplete, onPhoto, checkLoading, photoLoading, activePhoto }: {
+function SessionCard({ s, onCheckin, onRequestPayment, onPhoto, checkLoading, photoLoading, activePhoto }: {
   s: SessionData;
   onCheckin: (id: string, status: "PRESENT" | "ABSENT") => void;
-  onComplete: (id: string) => void;
+  onRequestPayment: (id: string) => void;
   onPhoto: (id: string) => void;
   checkLoading: string | null;
   photoLoading: boolean;
@@ -119,8 +122,8 @@ function SessionCard({ s, onCheckin, onComplete, onPhoto, checkLoading, photoLoa
                 <span className="material-symbols-outlined text-base">photo_camera</span>
                 {photoLoading && activePhoto === s.id ? "Uploading..." : s.photos.length > 0 ? `${s.photos.length} Photo(s)` : "Add Photo"}
               </button>
-              <button onClick={() => onComplete(s.id)} className="btn-primary flex-1 py-2.5">
-                <span className="material-symbols-outlined text-base">done_all</span>Complete
+              <button onClick={() => onRequestPayment(s.id)} className="btn-primary flex-1 py-2.5">
+                <span className="material-symbols-outlined text-base">payments</span>Complete &amp; Pay
               </button>
             </div>
             <p className="text-xs text-text-muted text-center">Upload photo before completing</p>
@@ -128,9 +131,22 @@ function SessionCard({ s, onCheckin, onComplete, onPhoto, checkLoading, photoLoa
         )}
 
         {s.status === "COMPLETED" && (
-          <div className="flex items-center gap-2 text-sm text-green-700 font-semibold bg-green-50 rounded-lg px-3 py-2.5">
-            <span className="material-symbols-outlined text-base">verified</span>
-            Completed · {s.photos.length} photo(s) on record
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-green-700 font-semibold bg-green-50 rounded-lg px-3 py-2.5">
+              <span className="material-symbols-outlined text-base">verified</span>
+              Completed · {s.photos.length} photo(s)
+            </div>
+            {s.payment_status === "RECEIVED" && (
+              <div className="flex items-center gap-2 text-xs bg-background-soft rounded-lg px-3 py-2">
+                <span className="material-symbols-outlined text-sm text-primary">payments</span>
+                <span className="font-semibold text-text-dark">
+                  {s.payment_method === "GPAY" ? "GPay/UPI" : "Cash"} received
+                </span>
+                <span className="text-text-muted ml-auto">
+                  ₹{Math.round((s.bookings.amount / (s.bookings.sessions_count || 1)))}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -212,6 +228,11 @@ export default function DoctorSchedule() {
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [checkLoading, setCheckLoading] = useState<string | null>(null);
+  const [paymentSession, setPaymentSession] = useState<{ id: string; amount: number } | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [showGpay, setShowGpay] = useState(false);
+  const [gpayQrUrl, setGpayQrUrl] = useState("");
+  const [earningsTotal, setEarningsTotal] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const weekDates = Array.from({ length: 7 }, (_, i) => {
@@ -245,6 +266,12 @@ export default function DoctorSchedule() {
     fetch("/api/auth/me").then((r) => r.json()).then((me) => {
       if (me.success) setDoctorName(me.data.name);
     });
+    fetch("/api/settings").then((r) => r.json()).then((d) => {
+      if (d.success) setGpayQrUrl(d.data?.gpay_qr_url ?? "");
+    });
+    fetch("/api/dashboard/doctor").then((r) => r.json()).then((d) => {
+      if (d.success) setEarningsTotal(d.data?.earnings?.total_commission ?? 0);
+    });
     loadSessions(selectedDate);
     loadBookedDates();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -270,13 +297,32 @@ export default function DoctorSchedule() {
     setCheckLoading(null);
   };
 
-  const markComplete = async (id: string) => {
-    const res = await fetch(`/api/sessions/${id}/status`, {
-      method: "PATCH",
+  const openPaymentModal = (id: string) => {
+    const s = sessions.find((s) => s.id === id);
+    if (!s) return;
+    const amount = Math.round(s.bookings.amount / (s.bookings.sessions_count || 1));
+    setShowGpay(false);
+    setPaymentSession({ id, amount });
+  };
+
+  const receivePayment = async (method: "CASH" | "GPAY") => {
+    if (!paymentSession) return;
+    setPaymentLoading(true);
+    const res = await fetch(`/api/sessions/${paymentSession.id}/payment`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "COMPLETED" }),
+      body: JSON.stringify({ method }),
     });
-    if (res.ok) setSessions((prev) => prev.map((s) => s.id === id ? { ...s, status: "COMPLETED" } : s));
+    if (res.ok) {
+      setSessions((prev) => prev.map((s) =>
+        s.id === paymentSession.id
+          ? { ...s, status: "COMPLETED", payment_method: method, payment_status: "RECEIVED" }
+          : s
+      ));
+      setEarningsTotal((prev) => prev + paymentSession.amount * 0.6);
+      setPaymentSession(null);
+    }
+    setPaymentLoading(false);
   };
 
   const uploadPhoto = async (id: string, file: File) => {
@@ -297,6 +343,63 @@ export default function DoctorSchedule() {
 
   return (
     <PortalLayout role="doctor" userName={doctorName}>
+      {/* Payment Modal */}
+      {paymentSession && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div className="p-5 border-b border-border-grey">
+              <h3 className="font-bold text-text-dark text-lg">Receive Payment</h3>
+              <p className="text-sm text-text-muted mt-0.5">Session fee: <span className="font-bold text-primary">₹{paymentSession.amount}</span></p>
+            </div>
+            <div className="p-5">
+              {showGpay ? (
+                <>
+                  <div className="flex flex-col items-center mb-5">
+                    {gpayQrUrl ? (
+                      <img src={gpayQrUrl} alt="GPay QR" className="w-48 h-48 object-contain rounded-xl border-2 border-border-grey mb-3" />
+                    ) : (
+                      <div className="w-48 h-48 bg-background-soft rounded-xl flex items-center justify-center border-2 border-dashed border-border-grey mb-3">
+                        <div className="text-center">
+                          <span className="material-symbols-outlined text-4xl text-text-muted block">qr_code_2</span>
+                          <p className="text-xs text-text-muted mt-1">QR not configured</p>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-sm text-text-muted text-center">Ask patient to scan &amp; pay <strong>₹{paymentSession.amount}</strong></p>
+                  </div>
+                  <button onClick={() => receivePayment("GPAY")} disabled={paymentLoading} className="btn-primary w-full mb-2 py-3">
+                    <span className="material-symbols-outlined text-base">check_circle</span>
+                    {paymentLoading ? "Recording..." : "GPay Received ✓"}
+                  </button>
+                  <button onClick={() => setShowGpay(false)} className="btn-secondary w-full py-2.5">Back</button>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-text-muted font-semibold uppercase tracking-wide mb-3">Select payment method</p>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <button
+                      onClick={() => receivePayment("CASH")}
+                      disabled={paymentLoading}
+                      className="flex flex-col items-center gap-2 p-5 rounded-xl border-2 border-green-200 bg-green-50 hover:bg-green-100 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-3xl text-green-600">payments</span>
+                      <span className="font-bold text-green-700">Cash</span>
+                    </button>
+                    <button
+                      onClick={() => setShowGpay(true)}
+                      className="flex flex-col items-center gap-2 p-5 rounded-xl border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 active:scale-95 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-3xl text-blue-600">qr_code_2</span>
+                      <span className="font-bold text-blue-700">GPay / UPI</span>
+                    </button>
+                  </div>
+                  <button onClick={() => setPaymentSession(null)} className="btn-secondary w-full py-2.5">Cancel</button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-6">
         <h1 className="text-xl lg:text-2xl font-bold text-text-dark">Today&apos;s Schedule</h1>
         <p className="text-sm text-text-muted mt-0.5">Manage patient sessions and attendance</p>
@@ -339,7 +442,7 @@ export default function DoctorSchedule() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-3 mb-3">
         {[
           { label: "Total",     value: stats.total,     icon: "event",        color: "text-text-dark" },
           { label: "Pending",   value: stats.pending,   icon: "pending",      color: "text-amber-600" },
@@ -351,6 +454,12 @@ export default function DoctorSchedule() {
             <p className="text-xs text-text-muted font-medium mt-0.5">{s.label}</p>
           </div>
         ))}
+      </div>
+      {/* Earnings pill */}
+      <div className="mb-6 flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-xl px-4 py-2.5">
+        <span className="material-symbols-outlined text-primary text-base">payments</span>
+        <span className="text-xs text-text-muted font-medium">Your total earnings (60% share)</span>
+        <span className="ml-auto font-bold text-primary">₹{earningsTotal.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
       </div>
 
       {/* Sessions */}
@@ -371,7 +480,7 @@ export default function DoctorSchedule() {
               key={s.id}
               s={s}
               onCheckin={checkin}
-              onComplete={markComplete}
+              onRequestPayment={openPaymentModal}
               onPhoto={(id) => { setActivePhoto(id); fileRef.current?.click(); }}
               checkLoading={checkLoading}
               photoLoading={photoLoading}

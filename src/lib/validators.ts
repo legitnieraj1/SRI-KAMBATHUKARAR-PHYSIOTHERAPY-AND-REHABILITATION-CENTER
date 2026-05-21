@@ -62,6 +62,15 @@ export const createDoctorSchema = z.object({
   email: z.string().email().optional(),
 });
 
+export const recordPaymentSchema = z.object({
+  method: z.enum(['CASH', 'GPAY']),
+});
+
+export const updateSettingSchema = z.object({
+  key: z.string().min(1),
+  value: z.string(),
+});
+
 export const updateDoctorSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   phone: z.string().min(10).max(15).optional(),
