@@ -30,11 +30,24 @@ interface AdminData {
   }>;
 }
 
+interface SessionPhoto {
+  id: string;
+  file_url: string;
+  photo_timestamp: string;
+  session_date: string;
+  session_time: string;
+  session_number: number;
+  visit_type: string;
+  doctor_name: string;
+  patient_name: string;
+  patient_phone: string;
+}
+
 const STATUS_BADGE: Record<string, string> = {
-  PENDING:   "badge badge-yellow",
-  CONFIRMED: "badge badge-blue",
-  COMPLETED: "badge badge-green",
-  CANCELLED: "badge badge-red",
+  PENDING:     "badge badge-yellow",
+  CONFIRMED:   "badge badge-blue",
+  COMPLETED:   "badge badge-green",
+  CANCELLED:   "badge badge-red",
   IN_PROGRESS: "badge badge-purple",
 };
 
@@ -51,11 +64,46 @@ function KpiCard({ label, value, sub, icon, accent }: { label: string; value: st
   );
 }
 
+// ── Lightbox ────────────────────────────────────────────────────────────────
+function Lightbox({ photo, onClose }: { photo: SessionPhoto; onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute -top-10 right-0 text-white/70 hover:text-white flex items-center gap-1 text-sm">
+          <span className="material-symbols-outlined">close</span>Close
+        </button>
+        <img src={photo.file_url} alt="Session photo" className="w-full rounded-2xl object-contain max-h-[70vh]" />
+        <div className="mt-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-white space-y-1">
+          <p className="font-bold text-sm">Dr. {photo.doctor_name} → {photo.patient_name}</p>
+          <p className="text-xs text-white/70">
+            {new Date(photo.session_date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+            {" · "}{photo.session_time}
+            {" · Session "}{photo.session_number}
+            {" · "}{photo.visit_type === "HOME" ? "Home Visit" : "Center Visit"}
+          </p>
+          <p className="text-xs text-white/50">
+            Uploaded {new Date(photo.photo_timestamp).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [data, setData] = useState<AdminData | null>(null);
   const [adminName, setAdminName] = useState("Admin");
   const [loading, setLoading] = useState(true);
+  const [photos, setPhotos] = useState<SessionPhoto[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(true);
+  const [lightbox, setLightbox] = useState<SessionPhoto | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -67,13 +115,19 @@ export default function AdminDashboard() {
       if (me.success) setAdminName(me.data.name);
     }).catch(() => router.push("/stafflogin"))
       .finally(() => setLoading(false));
+
+    fetch("/api/admin/photos?limit=30")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setPhotos(d.data ?? []); })
+      .finally(() => setPhotosLoading(false));
   }, [router]);
 
   const stats = data?.stats;
 
   return (
     <PortalLayout role="admin" userName={adminName}>
-      {/* Page header */}
+      {lightbox && <Lightbox photo={lightbox} onClose={() => setLightbox(null)} />}
+
       <div className="mb-6">
         <h1 className="text-xl lg:text-2xl font-bold text-text-dark">Dashboard</h1>
         <p className="text-sm text-text-muted mt-0.5">
@@ -109,9 +163,9 @@ export default function AdminDashboard() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: "Total", value: stats?.today_sessions ?? 0, color: "text-text-dark" },
-                  { label: "Completed", value: stats?.today_completed ?? 0, color: "text-green-600" },
-                  { label: "Remaining", value: (stats?.today_sessions ?? 0) - (stats?.today_completed ?? 0), color: "text-amber-600" },
+                  { label: "Total",     value: stats?.today_sessions ?? 0,                                              color: "text-text-dark" },
+                  { label: "Completed", value: stats?.today_completed ?? 0,                                             color: "text-green-600" },
+                  { label: "Remaining", value: (stats?.today_sessions ?? 0) - (stats?.today_completed ?? 0),            color: "text-amber-600" },
                 ].map((s) => (
                   <div key={s.label} className="text-center p-4 bg-background-soft rounded-xl">
                     <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
@@ -142,6 +196,110 @@ export default function AdminDashboard() {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* ── Session Photos Gallery ── */}
+          <div className="card overflow-hidden mb-6">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-grey">
+              <div>
+                <p className="section-title flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-lg">photo_library</span>
+                  Session Photos
+                </p>
+                <p className="section-subtitle">Photos uploaded by doctors after each session</p>
+              </div>
+              {photos.length > 0 && (
+                <span className="badge badge-blue">{photos.length} photos</span>
+              )}
+            </div>
+
+            {photosLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-5">
+                {Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton aspect-square rounded-xl" />)}
+              </div>
+            ) : photos.length === 0 ? (
+              <div className="text-center py-12">
+                <span className="material-symbols-outlined text-4xl text-primary/20 block mb-2">photo_camera</span>
+                <p className="text-sm font-semibold text-text-dark">No photos yet</p>
+                <p className="text-xs text-text-muted mt-1">Doctors upload photos after marking sessions complete</p>
+              </div>
+            ) : (
+              <div className="p-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {photos.map((photo) => (
+                    <button
+                      key={photo.id}
+                      type="button"
+                      onClick={() => setLightbox(photo)}
+                      className="group relative aspect-square rounded-xl overflow-hidden bg-background-soft border border-border-grey hover:border-primary/30 transition-all hover:shadow-md"
+                    >
+                      <img
+                        src={photo.file_url}
+                        alt={`Session photo — ${photo.patient_name}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {/* Overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                        <p className="text-white text-[10px] font-bold truncate">{photo.patient_name}</p>
+                        <p className="text-white/70 text-[9px] truncate">Dr. {photo.doctor_name}</p>
+                      </div>
+                      {/* Date badge */}
+                      <div className="absolute top-1.5 right-1.5 bg-black/50 backdrop-blur-sm rounded-md px-1.5 py-0.5">
+                        <p className="text-white text-[9px] font-semibold">
+                          {new Date(photo.session_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Table view below grid */}
+                <div className="mt-5 hidden lg:block overflow-x-auto border border-border-grey rounded-xl">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Doctor</th>
+                        <th>Patient</th>
+                        <th>Session Date &amp; Time</th>
+                        <th>Visit</th>
+                        <th>Session #</th>
+                        <th>Uploaded</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {photos.map((photo) => (
+                        <tr key={photo.id}>
+                          <td className="font-medium">Dr. {photo.doctor_name}</td>
+                          <td>
+                            <p className="font-semibold">{photo.patient_name}</p>
+                            <p className="text-xs text-text-muted">{photo.patient_phone}</p>
+                          </td>
+                          <td>
+                            <p className="font-medium">{new Date(photo.session_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                            <p className="text-xs text-text-muted">{photo.session_time}</p>
+                          </td>
+                          <td>
+                            <span className={`badge ${photo.visit_type === "HOME" ? "badge-purple" : "badge-blue"}`}>
+                              {photo.visit_type === "HOME" ? "Home" : "Center"}
+                            </span>
+                          </td>
+                          <td className="text-text-muted">#{photo.session_number}</td>
+                          <td className="text-xs text-text-muted">
+                            {new Date(photo.photo_timestamp).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                          <td>
+                            <button onClick={() => setLightbox(photo)} className="btn-ghost py-1 px-2 text-xs">
+                              <span className="material-symbols-outlined text-sm">open_in_full</span>View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Recent Bookings Table */}
