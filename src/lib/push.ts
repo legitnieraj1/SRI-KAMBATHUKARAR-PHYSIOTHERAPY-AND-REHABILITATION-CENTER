@@ -1,12 +1,6 @@
 import webpush from 'web-push';
 import { supabaseAdmin } from './supabase-admin';
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL!,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!,
-);
-
 interface PushPayload {
   title: string;
   body: string;
@@ -14,8 +8,20 @@ interface PushPayload {
   tag?: string;
 }
 
+let vapidSet = false;
+function ensureVapid() {
+  if (vapidSet) return;
+  const email  = process.env.VAPID_EMAIL;
+  const pubKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privKey = process.env.VAPID_PRIVATE_KEY;
+  if (!email || !pubKey || !privKey) return;
+  webpush.setVapidDetails(email, pubKey, privKey);
+  vapidSet = true;
+}
+
 export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
-  if (!userIds.length) return;
+  ensureVapid();
+  if (!vapidSet || !userIds.length) return;
 
   const { data: subs, error } = await supabaseAdmin
     .from('push_subscriptions')
