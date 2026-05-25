@@ -223,7 +223,7 @@ export default function DoctorSchedule() {
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [doctorName, setDoctorName] = useState("Doctor");
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }));
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -231,14 +231,14 @@ export default function DoctorSchedule() {
   const [paymentSession, setPaymentSession] = useState<{ id: string; amount: number } | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [showGpay, setShowGpay] = useState(false);
-  const [gpayQrUrl, setGpayQrUrl] = useState("");
   const [earningsTotal, setEarningsTotal] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Generate dates in IST to avoid UTC-offset date shifts
   const weekDates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i - 2);
-    return d.toISOString().split("T")[0];
+    return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   });
 
   const loadSessions = (date: string) => {
@@ -265,9 +265,6 @@ export default function DoctorSchedule() {
   useEffect(() => {
     fetch("/api/auth/me").then((r) => r.json()).then((me) => {
       if (me.success) setDoctorName(me.data.name);
-    });
-    fetch("/api/settings").then((r) => r.json()).then((d) => {
-      if (d.success) setGpayQrUrl(d.data?.gpay_qr_url ?? "");
     });
     fetch("/api/dashboard/doctor").then((r) => r.json()).then((d) => {
       if (d.success) setEarningsTotal(d.data?.earnings?.total_commission ?? 0);
@@ -355,16 +352,7 @@ export default function DoctorSchedule() {
               {showGpay ? (
                 <>
                   <div className="flex flex-col items-center mb-5">
-                    {gpayQrUrl ? (
-                      <img src={gpayQrUrl} alt="GPay QR" className="w-48 h-48 object-contain rounded-xl border-2 border-border-grey mb-3" />
-                    ) : (
-                      <div className="w-48 h-48 bg-background-soft rounded-xl flex items-center justify-center border-2 border-dashed border-border-grey mb-3">
-                        <div className="text-center">
-                          <span className="material-symbols-outlined text-4xl text-text-muted block">qr_code_2</span>
-                          <p className="text-xs text-text-muted mt-1">QR not configured</p>
-                        </div>
-                      </div>
-                    )}
+                    <img src="/gpay-qr.jpeg" alt="GPay QR" className="w-48 h-48 object-contain rounded-xl border-2 border-border-grey mb-3" />
                     <p className="text-sm text-text-muted text-center">Ask patient to scan &amp; pay <strong>₹{paymentSession.amount}</strong></p>
                   </div>
                   <button onClick={() => receivePayment("GPAY")} disabled={paymentLoading} className="btn-primary w-full mb-2 py-3">
@@ -409,7 +397,7 @@ export default function DoctorSchedule() {
       <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0 pb-1 mb-6">
         {weekDates.map((d) => {
           const date = new Date(d + "T00:00:00");
-          const isToday    = d === new Date().toISOString().split("T")[0];
+          const isToday    = d === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
           const isSelected = d === selectedDate;
           const hasBooking = bookedDates.has(d);
           return (

@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
   after(async () => {
     try {
       const dateStr = new Date(start_date + 'T00:00:00').toLocaleDateString('en-IN', {
-        weekday: 'short', day: 'numeric', month: 'short',
+        weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata',
       });
       const payload = {
         title: `New Booking — ${name}`,

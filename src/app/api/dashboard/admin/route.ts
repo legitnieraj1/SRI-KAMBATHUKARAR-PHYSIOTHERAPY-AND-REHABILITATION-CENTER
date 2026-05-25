@@ -5,7 +5,7 @@ export async function GET() {
   const result = await requireAuth(['SUPER_ADMIN']);
   if (result instanceof Response) return result;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   const monthStart = today.slice(0, 7) + '-01';
 
   const [
