@@ -14,7 +14,7 @@ export async function GET() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const [todaySessionsRes, earningsRes] = await Promise.all([
+  const [todaySessionsRes, earningsRes, liveSessionsRes] = await Promise.all([
     supabaseAdmin
       .from('sessions')
       .select(`
@@ -31,6 +31,12 @@ export async function GET() {
       .from('doctor_earnings')
       .select('commission, sessions_count, total_revenue, monthly_reports(month)')
       .eq('doctor_id', doctor.id),
+    // Live: all completed sessions for this doctor (not yet in locked reports)
+    supabaseAdmin
+      .from('sessions')
+      .select('bookings!inner(amount, sessions_count)')
+      .eq('doctor_id', doctor.id)
+      .eq('session_status', 'COMPLETED'),
   ]);
 
   const sessions = (todaySessionsRes.data ?? []).map((s: any) => ({
@@ -46,11 +52,17 @@ export async function GET() {
     photos: s.photos ?? [],
   }));
 
-  const earningsData = earningsRes.data ?? [];
-  const totalCommission = earningsData.reduce((s, e) => s + (e.commission ?? 0), 0);
-  const totalRevenue    = earningsData.reduce((s, e) => s + (e.total_revenue ?? 0), 0);
-  const totalSessions   = earningsData.reduce((s, e) => s + (e.sessions_count ?? 0), 0);
+  // Live totals from completed sessions (source of truth until monthly reports locked)
+  const liveSessions = liveSessionsRes.data ?? [];
+  const liveRevenue = liveSessions.reduce((sum: number, s: any) => {
+    const perSession = (s.bookings?.amount ?? 0) / (s.bookings?.sessions_count ?? 1);
+    return sum + perSession;
+  }, 0);
+  const totalCommission = Math.round(liveRevenue * 0.6 * 100) / 100;
+  const totalRevenue    = Math.round(liveRevenue * 100) / 100;
+  const totalSessions   = liveSessions.length;
 
+  const earningsData = earningsRes.data ?? [];
   const monthly = earningsData.map((e: any) => ({
     month: e.monthly_reports?.month?.slice(0, 7) ?? '',
     sessions_count: e.sessions_count ?? 0,
