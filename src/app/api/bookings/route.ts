@@ -71,9 +71,9 @@ export async function POST(req: NextRequest) {
   if (conflict) return err('This time slot is already booked. Please choose another.', 409);
 
   // Per-session pricing varies by visit type
-  // CENTER: ₹100/session  ·  HOME: ₹500/session (covers travel + on-site care)
-  const perSession = visit_type === 'HOME' ? 500 : 100;
-  const sessions_count = package_type === 'ONE_DAY' ? 1 : 5;
+  // CENTER: ₹100/session  ·  HOME: ₹300/session (covers travel + on-site care)
+  const perSession = visit_type === 'HOME' ? 300 : 100;
+  const sessions_count = package_type === 'ONE_DAY' ? 1 : 6;
   const amount = perSession * sessions_count;
 
   // patient_id in bookings = users.id (NOT patients.id)

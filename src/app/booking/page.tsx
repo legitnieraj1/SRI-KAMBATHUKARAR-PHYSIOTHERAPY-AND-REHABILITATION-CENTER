@@ -140,7 +140,7 @@ function SuccessPage({
     { icon: "calendar_today", label: "Date & Time", value: `${dateStr}  ·  ${selectedSlot}` },
     {
       icon: "inventory_2", label: "Package",
-      value: `${packageType === "ONE_DAY" ? "1-Day" : "5-Day"} · ₹${perSession}/session × ${sessionCount}`,
+      value: `${packageType === "ONE_DAY" ? "1-Day" : "Weekly"} · ₹${perSession}/session × ${sessionCount}`,
     },
     ...(notes ? [{ icon: "notes", label: "Notes", value: notes }] : []),
   ];
@@ -379,8 +379,8 @@ export default function BookingPage() {
     (step === "datetime" && (!selectedDate || !selectedSlot)) ||
     loading;
 
-  const perSession = visitType === "HOME" ? 500 : 100;
-  const sessionCount = packageType === "ONE_DAY" ? 1 : 5;
+  const perSession = visitType === "HOME" ? 300 : 100;
+  const sessionCount = packageType === "ONE_DAY" ? 1 : 6;
   const price = perSession * sessionCount;
 
   if (step === "success" && selectedDoctor) {
@@ -530,7 +530,7 @@ export default function BookingPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
                       { type: "CENTER" as VisitType, label: "Center Visit", labelTa: "மையத்தில்", desc: "Visit our Komarapalayam clinic", per: 100, icon: "business" },
-                      { type: "HOME" as VisitType, label: "Home Visit", labelTa: "வீட்டிற்கு", desc: "Therapist visits your home", per: 500, icon: "home" },
+                      { type: "HOME" as VisitType, label: "Home Visit", labelTa: "வீட்டிற்கு", desc: "Therapist visits your home", per: 300, icon: "home" },
                     ].map((v) => (
                       <button key={v.type} type="button" onClick={() => setVisitType(v.type)}
                         className={`text-left rounded-xl border-2 p-4 transition-all ${visitType === v.type ? "border-primary bg-primary/5" : "border-border-grey hover:border-primary/40 bg-white"}`}
@@ -612,7 +612,7 @@ export default function BookingPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
                       { type: "ONE_DAY" as PackageType, label: "1-Day Package", labelTa: "ஒரு நாள்", count: 1, desc: "Single session", icon: "calendar_today" },
-                      { type: "FIVE_DAY" as PackageType, label: "5-Day Package", labelTa: "ஐந்து நாட்கள்", count: 5, desc: "5 consecutive sessions (Mon–Sat)", icon: "date_range" },
+                      { type: "FIVE_DAY" as PackageType, label: "Weekly Package", labelTa: "வார தொகுப்பு", count: 6, desc: "6 consecutive sessions (Mon–Sat)", icon: "date_range" },
                     ].map((pkg) => {
                       const total = perSession * pkg.count;
                       return (
@@ -729,7 +729,7 @@ export default function BookingPage() {
                   {[
                     { icon: "person", label: "Patient", value: `${name} · +91 ${phone}` },
                     { icon: "stethoscope", label: "Doctor", value: `Dr. ${selectedDoctor.users.name} · ${selectedDoctor.specialization}` },
-                    { icon: "inventory_2", label: "Package", value: `${packageType === "ONE_DAY" ? "1-Day" : "5-Day"} Package — ₹${perSession} × ${sessionCount} = ₹${price}` },
+                    { icon: "inventory_2", label: "Package", value: `${packageType === "ONE_DAY" ? "1-Day" : "Weekly"} Package — ₹${perSession} × ${sessionCount} = ₹${price}` },
                     { icon: visitType === "CENTER" ? "business" : "home", label: "Visit Type", value: visitType === "CENTER" ? "Center Visit" : "Home Visit" },
                     ...(visitType === "HOME" && address.door ? [{
                       icon: "location_on",
@@ -793,7 +793,7 @@ export default function BookingPage() {
                 {[
                   { icon: "person", label: "Patient", value: name || "—" },
                   { icon: "stethoscope", label: "Doctor", value: selectedDoctor ? `Dr. ${selectedDoctor.users.name}` : "Not selected" },
-                  { icon: "inventory_2", label: "Package", value: `${packageType === "ONE_DAY" ? "1-Day" : "5-Day"} · ₹${price}` },
+                  { icon: "inventory_2", label: "Package", value: `${packageType === "ONE_DAY" ? "1-Day" : "Weekly"} · ₹${price}` },
                   { icon: visitType === "CENTER" ? "business" : "home", label: "Visit", value: visitType === "CENTER" ? "Center Visit" : "Home Visit" },
                   ...(visitType === "HOME" && address.city ? [{ icon: "location_on", label: "City", value: address.city }] : []),
                   ...(selectedDate ? [{ icon: "calendar_today", label: "Date", value: new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" }) }] : []),
