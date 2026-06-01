@@ -152,8 +152,8 @@ export default function LandingPage() {
                     <span className="text-right">Home</span>
                   </div>
                   {[
-                    { icon: "calendar_today", label: "1-Day", center: 100, home: 500 },
-                    { icon: "date_range", label: "5-Day", center: 500, home: 2500 },
+                    { icon: "calendar_today", label: "1-Day", center: 100, home: 300 },
+                    { icon: "date_range", label: "Weekly (6-Day)", center: 600, home: 1800 },
                   ].map((pkg) => (
                     <div key={pkg.label} className="grid grid-cols-3 gap-2 items-center p-3 bg-background-soft rounded-xl">
                       <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function LandingPage() {
                     </div>
                   ))}
                   <p className="text-[11px] text-text-muted text-center pt-1">
-                    Center ₹100/session · Home ₹500/session
+                    Center ₹100/session · Home ₹300/session
                   </p>
                 </div>
 
