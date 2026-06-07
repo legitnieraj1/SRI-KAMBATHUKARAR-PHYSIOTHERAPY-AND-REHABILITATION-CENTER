@@ -17,7 +17,7 @@ export async function GET() {
     pendingBookingsRes,
     recentBookingsRes,
   ] = await Promise.all([
-    supabaseAdmin.from('patients').select('id', { count: 'exact', head: true }),
+    supabaseAdmin.from('users').select('id', { count: 'exact', head: true }).eq('role', 'PATIENT'),
     supabaseAdmin.from('doctors').select('id', { count: 'exact', head: true }).eq('is_active', true),
 
     // Total booking value this month (all non-cancelled) — shows projected revenue

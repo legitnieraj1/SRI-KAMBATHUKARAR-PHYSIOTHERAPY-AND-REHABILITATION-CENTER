@@ -84,16 +84,15 @@ export async function POST(req: NextRequest) {
     .gte('scheduled_date', startDate)
     .lte('scheduled_date', endDate);
 
-  // Total revenue from non-cancelled bookings that started this month
-  const { data: monthBookings } = await supabaseAdmin
-    .from('bookings')
-    .select('amount')
-    .gte('start_date', startDate)
-    .lte('start_date', endDate)
-    .neq('status', 'CANCELLED');
-
-  const totalRevenue   = (monthBookings ?? []).reduce((s, b) => s + (b.amount ?? 0), 0);
+  // Revenue from completed sessions only (consistent with payroll + doctor earnings)
+  // Uses per-session amount so multi-session packages are counted per actual visit
   const totalSessions  = (completedSessions ?? []).length;
+  const totalRevenue   = Math.round(
+    (completedSessions ?? []).reduce((s, sess) => {
+      const perSession = ((sess.bookings as any)?.amount ?? 0) / ((sess.bookings as any)?.sessions_count ?? 1);
+      return s + perSession;
+    }, 0) * 100
+  ) / 100;
   const superAdminShare = Math.round(totalRevenue * 0.4 * 100) / 100;
 
   // Aggregate per doctor
