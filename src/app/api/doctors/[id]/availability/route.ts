@@ -43,7 +43,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     allSlots.push(`${String(h).padStart(2, '0')}:30`);
   }
 
-  const available = allSlots.filter((s) => !bookedSlots.includes(s));
+  // Filter past slots when date is today (IST)
+  const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  let filteredSlots = allSlots;
+  if (date === todayIST) {
+    const nowIST = new Date();
+    const nowMinutes =
+      parseInt(nowIST.toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false }), 10) * 60 +
+      nowIST.getMinutes();
+    filteredSlots = allSlots.filter((s) => {
+      const [h, m] = s.split(':').map(Number);
+      return h * 60 + m > nowMinutes; // strictly future only
+    });
+  }
 
-  return ok({ date, doctor_id: id, available_slots: available, booked_slots: bookedSlots });
+  const available = filteredSlots.filter((s) => !bookedSlots.includes(s));
+  // Past slots are simply absent — not returned as booked, so no lock icon shown
+  const visibleBooked = bookedSlots.filter((s) => filteredSlots.includes(s));
+
+  return ok({ date, doctor_id: id, available_slots: available, booked_slots: visibleBooked });
 }

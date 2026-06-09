@@ -32,7 +32,10 @@ const getAvailableDays = (from: Date, count: number) => {
   const days: string[] = [];
   const d = new Date(from);
   while (days.length < count) {
-    if (d.getDay() !== 0) days.push(d.toISOString().split("T")[0]);
+    const dateStr = d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    // getDay() in IST
+    const dayOfWeek = new Date(dateStr + "T00:00:00").getDay();
+    if (dayOfWeek !== 0) days.push(dateStr); // skip Sunday
     d.setDate(d.getDate() + 1);
   }
   return days;

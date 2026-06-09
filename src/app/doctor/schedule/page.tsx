@@ -41,14 +41,16 @@ function parseNotes(raw: string | null): { address: string | null; extra: string
   return { address, extra };
 }
 
-function SessionCard({ s, onCheckin, onRequestPayment, onPhoto, checkLoading, photoLoading, activePhoto }: {
+function SessionCard({ s, onCheckin, onRequestPayment, onPhoto, onCancel, checkLoading, photoLoading, activePhoto, cancelLoading }: {
   s: SessionData;
   onCheckin: (id: string, status: "PRESENT" | "ABSENT") => void;
   onRequestPayment: (id: string) => void;
   onPhoto: (id: string) => void;
+  onCancel: (id: string) => void;
   checkLoading: string | null;
   photoLoading: boolean;
   activePhoto: string | null;
+  cancelLoading: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
   const attended = s.attendance[0];
@@ -98,13 +100,23 @@ function SessionCard({ s, onCheckin, onRequestPayment, onPhoto, checkLoading, ph
 
         {/* Action buttons */}
         {s.status === "PENDING" && (
-          <div className="flex gap-2">
-            <button onClick={() => onCheckin(s.id, "PRESENT")} disabled={checkLoading === s.id} className="btn-primary flex-1 py-2.5">
-              <span className="material-symbols-outlined text-base">check</span>
-              {checkLoading === s.id ? "Marking..." : "Mark Present"}
-            </button>
-            <button onClick={() => onCheckin(s.id, "ABSENT")} disabled={checkLoading === s.id} className="btn-secondary w-11 p-0 text-red-500 border-red-200 hover:border-red-400 hover:bg-red-50">
-              <span className="material-symbols-outlined text-base">close</span>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <button onClick={() => onCheckin(s.id, "PRESENT")} disabled={checkLoading === s.id} className="btn-primary flex-1 py-2.5">
+                <span className="material-symbols-outlined text-base">check</span>
+                {checkLoading === s.id ? "Marking..." : "Mark Present"}
+              </button>
+              <button onClick={() => onCheckin(s.id, "ABSENT")} disabled={checkLoading === s.id} className="btn-secondary w-11 p-0 text-red-500 border-red-200 hover:border-red-400 hover:bg-red-50">
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+            <button
+              onClick={() => onCancel(s.id)}
+              disabled={cancelLoading === s.id}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-red-500 border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-sm">event_busy</span>
+              {cancelLoading === s.id ? "Cancelling..." : "Cancel Slot — Free for rebooking"}
             </button>
           </div>
         )}
@@ -228,6 +240,7 @@ export default function DoctorSchedule() {
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [checkLoading, setCheckLoading] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState<string | null>(null);
   const [paymentSession, setPaymentSession] = useState<{ id: string; amount: number } | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [showGpay, setShowGpay] = useState(false);
@@ -292,6 +305,20 @@ export default function DoctorSchedule() {
       ));
     }
     setCheckLoading(null);
+  };
+
+  const cancelSlot = async (id: string) => {
+    if (!confirm("Cancel this slot? The time will be freed for new bookings.")) return;
+    setCancelLoading(id);
+    const res = await fetch(`/api/sessions/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "CANCELLED" }),
+    });
+    if (res.ok) {
+      setSessions((prev) => prev.map((s) => s.id === id ? { ...s, status: "CANCELLED" } : s));
+    }
+    setCancelLoading(null);
   };
 
   const openPaymentModal = (id: string) => {
@@ -470,9 +497,11 @@ export default function DoctorSchedule() {
               onCheckin={checkin}
               onRequestPayment={openPaymentModal}
               onPhoto={(id) => { setActivePhoto(id); fileRef.current?.click(); }}
+              onCancel={cancelSlot}
               checkLoading={checkLoading}
               photoLoading={photoLoading}
               activePhoto={activePhoto}
+              cancelLoading={cancelLoading}
             />
           ))}
         </div>

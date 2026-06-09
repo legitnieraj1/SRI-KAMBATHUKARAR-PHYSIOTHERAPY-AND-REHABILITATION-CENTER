@@ -20,12 +20,12 @@ export async function GET() {
     supabaseAdmin.from('users').select('id', { count: 'exact', head: true }).eq('role', 'PATIENT'),
     supabaseAdmin.from('doctors').select('id', { count: 'exact', head: true }).eq('is_active', true),
 
-    // Total booking value this month (all non-cancelled) — shows projected revenue
+    // Per-session revenue this month (consistent with payroll/reports)
     supabaseAdmin
-      .from('bookings')
-      .select('amount')
-      .gte('start_date', monthStart)
-      .neq('status', 'CANCELLED'),
+      .from('sessions')
+      .select('bookings!inner(amount, sessions_count)')
+      .gte('scheduled_date', monthStart)
+      .neq('session_status', 'CANCELLED'),
 
     // Cash actually collected this month via payment log
     supabaseAdmin
@@ -56,7 +56,10 @@ export async function GET() {
       .limit(10),
   ]);
 
-  const monthlyRevenue  = (monthlyBookingsRes.data ?? []).reduce((s, b) => s + (b.amount ?? 0), 0);
+  const monthlyRevenue  = Math.round((monthlyBookingsRes.data ?? []).reduce((s, sess: any) => {
+    const perSession = (sess.bookings?.amount ?? 0) / (sess.bookings?.sessions_count ?? 1);
+    return s + perSession;
+  }, 0) * 100) / 100;
   const collectedAmount = (collectedPaymentsRes.data ?? []).reduce((s, p) => s + (p.amount ?? 0), 0);
   const todaySessions   = todaySessionsRes.data ?? [];
 
