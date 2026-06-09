@@ -20,11 +20,12 @@ export async function GET() {
     supabaseAdmin.from('users').select('id', { count: 'exact', head: true }).eq('role', 'PATIENT'),
     supabaseAdmin.from('doctors').select('id', { count: 'exact', head: true }).eq('is_active', true),
 
-    // Per-session revenue this month (consistent with payroll/reports)
+    // Per-session revenue: this month up to today only (no future sessions)
     supabaseAdmin
       .from('sessions')
       .select('bookings!inner(amount, sessions_count)')
       .gte('scheduled_date', monthStart)
+      .lte('scheduled_date', today)
       .neq('session_status', 'CANCELLED'),
 
     // Cash actually collected this month via payment log
